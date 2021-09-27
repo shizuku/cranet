@@ -12,7 +12,7 @@ class Loss:
         return self.forward(a, y)
 
 
-class MeanSquared(Loss):
+class MSELoss(Loss):
     def forward(self, a: np.ndarray, y: np.ndarray):
         return np.average(np.sum((a - y) ** 2, axis=-1) / 2)
 
@@ -20,7 +20,7 @@ class MeanSquared(Loss):
         return a - y
 
 
-class CrossEntropy(Loss):
+class CrossEntropyLoss(Loss):
     def forward(self, p: np.ndarray, y: np.ndarray):
         return -np.average(np.sum(y * np.log(p+1e-10), axis=-1))
 

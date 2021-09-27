@@ -2,37 +2,33 @@ from typing import List
 
 import numpy as np
 
-from .layer import Layer
-from .loss import Loss
+from .module import Module
 from .optimizer import Optimizer
-from .data import Dataset
+from .loss import Loss
+
+from ..data import Dataset
 
 
-class Model:
-    def __init__(self):
-        pass
-
-
-class Sequential(Model):
+class Sequential(Module):
     def __init__(self, optimizer: Optimizer, loss: Loss):
         super().__init__()
-        self.l: List[Layer] = []
+        self.l: List[Module] = []
         self.optimizer = optimizer
         self.loss = loss
         self.train_loss = []
         self.train_accu = []
         self.test_accu = []
 
-    def __int__(self, optimizer: Optimizer, loss: Loss, l: List[Layer]):
+    def __init__(self, l: List[Module], optimizer: Optimizer, loss: Loss):
         super().__init__()
-        self.l: List[Layer] = l
+        self.l: List[Module] = l
         self.optimizer = optimizer
         self.loss = loss
         self.train_loss = []
         self.train_accu = []
         self.test_accu = []
 
-    def add(self, layer: Layer):
+    def add(self, layer: Module):
         self.l.append(layer)
 
     def forward(self, x):
@@ -46,9 +42,9 @@ class Sequential(Model):
             delta = i.backward(delta)
         return delta
 
-    def update(self):
+    def update(self,  optimizer: Optimizer):
         for i in self.l:
-            i.update(self.optimizer)
+            i.update(optimizer)
 
     def train_step(self, dataset: Dataset, epoch: int, verbose):
         for (inp, lab), i in dataset.enumerate():
@@ -56,7 +52,7 @@ class Sequential(Model):
             loss = self.loss.forward(pre, lab)
             delta = self.loss.backward(pre, lab)
             self.backward(delta)
-            self.update()
+            self.update(self.optimizer)
             self.train_loss.append(loss)
             if verbose:
                 print("Epoch: {}\tStep: {}\tLoss: {}".format(
