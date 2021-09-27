@@ -19,15 +19,6 @@ class Sequential(Module):
         self.train_accu = []
         self.test_accu = []
 
-    def __init__(self, l: List[Module], optimizer: Optimizer, loss: Loss):
-        super().__init__()
-        self.l: List[Module] = l
-        self.optimizer = optimizer
-        self.loss = loss
-        self.train_loss = []
-        self.train_accu = []
-        self.test_accu = []
-
     def add(self, layer: Module):
         self.l.append(layer)
 

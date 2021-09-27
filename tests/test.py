@@ -1,2 +1,2 @@
-import dpln as dl
-print(dl.__version__)
+import dpln
+print(dpln.__version__)
