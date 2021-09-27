@@ -12,7 +12,7 @@ class Loss:
         return self.forward(a, y)
 
 
-class MSE(Loss):
+class MeanSquared(Loss):
     def forward(self, a: np.ndarray, y: np.ndarray):
         return np.average(np.sum((a - y) ** 2, axis=-1) / 2)
 
@@ -22,7 +22,7 @@ class MSE(Loss):
 
 class CrossEntropy(Loss):
     def forward(self, p: np.ndarray, y: np.ndarray):
-        return np.tensordot(y, np.log(p), axes=[[1], [1]])
+        return -np.average(np.sum(y * np.log(p+1e-10), axis=-1))
 
-    def backward(self, p: np.ndarray, y: np.ndarray):
-        pass
+    def backward(self, a: np.ndarray, y: np.ndarray):
+        return a - y

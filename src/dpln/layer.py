@@ -15,8 +15,8 @@ class Layer:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return self.forward(x)
 
-    def backward(self, dout: np.ndarray) -> np.ndarray:
-        return dout
+    def backward(self, dl: np.ndarray) -> np.ndarray:
+        return dl
 
     def update(self, optimizer: Optimizer):
         pass
@@ -42,7 +42,7 @@ class Linear(Layer):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
-        forward of linear: $z = Wx+b$
+        Linear forward
 
         :param x: shape(batch_size, in_features)
         :return: shape(batch_size, out_features)
@@ -53,17 +53,17 @@ class Linear(Layer):
             self.z = np.add(self.z, self.b)
         return self.z
 
-    def backward(self, dout: np.ndarray):
+    def backward(self, dz: np.ndarray):
         """
         Linear backward
 
-        :param dout:  shape(bs, out_features)
-        :return: (bs, in_features)
+        :param dz: shape(batch_size, out_features)
+        :return: shape(batch_size, in_features)
         """
-        dx = np.dot(dout, self.W.transpose())
-        self.dW = np.dot(self.x.transpose(), dout)
+        dx = np.dot(dz, self.W.transpose())
+        self.dW = np.dot(self.x.transpose(), dz)
         if self.use_bias:
-            self.db = np.sum(dout, axis=0)  # (bs, out)
+            self.db = np.sum(dz, axis=0)  # (bs, out)
         return dx
 
     def update(self, optimizer: Optimizer):
@@ -77,16 +77,16 @@ class ReLU(Layer):
         super().__init__()
         self.mask = None
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        self.mask = (x <= 0)
-        out = x.copy()
-        out[self.mask] = 0
-        return out
+    def forward(self, z: np.ndarray) -> np.ndarray:
+        self.mask = (z <= 0)
+        a = z.copy()
+        a[self.mask] = 0
+        return a
 
-    def backward(self, dout: np.ndarray) -> np.ndarray:
-        dout[self.mask] = 0
-        dx = dout
-        return dx
+    def backward(self, da: np.ndarray) -> np.ndarray:
+        da[self.mask] = 0
+        dz = da
+        return dz
 
     def update(self, optimizer: Optimizer):
         pass
@@ -99,24 +99,24 @@ class Sigmoid(Layer):
 
     def forward(self, z: np.ndarray) -> np.ndarray:
         """
-        sigmoid forward
+        Sigmoid forward
 
-        :param z: (bs, in)
-        :return: (bs, in)
+        :param z: shape(batch_size, in)
+        :return: shape(batch_size, in)
         """
         self.a = sigmoid(z)
         return self.a
 
-    def backward(self, dout: np.ndarray) -> np.ndarray:
+    def backward(self, da: np.ndarray) -> np.ndarray:
         """
-        sigmoid backward
+        Sigmoid backward
 
-        :param dout: (bs, in)
-        :return: (bs, in)
+        :param da: shape(batch_size, in)
+        :return: shape(batch_size, in)
         """
         df = (1.0 - self.a) * self.a
-        dx = dout * df
-        return dx
+        dz = da * df
+        return dz
 
     def update(self, optimizer: Optimizer):
         pass
@@ -129,28 +129,40 @@ class Softmax(Layer):
         self.z = None
         self.a = None
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, z: np.ndarray) -> np.ndarray:
         """
-        softmax forward
+        Softmax forward
 
-        :param x: shape: (batch_size, 10)
-        :return: shape: (batch_size, 10)
+        :param z: shape(batch_size, in)
+        :return: shape(batch_size, in)
         """
-        self.z = x
-        self.a = softmax(x, axis=self.axis)
+        self.z = z
+        self.a = softmax(z, axis=self.axis)
         return self.a
 
-    def backward(self, dout: np.ndarray) -> np.ndarray:
+    def backward(self, da: np.ndarray) -> np.ndarray:
         """
         softmax backward
 
-        :param dout: shape(batch_size, 10)
-        :return: shape(batch_size, 10)
+        :param da: shape(batch_size, in)
+        :return: shape(batch_size, in)
         """
-        df = softmax_derivative(self.z)  # (bs, 10, 10)
-        dx = np.matmul(df, dout[:, :, np.newaxis])  # (bs, 10)
-        dx = dx[:, :, 0]
-        return dx
+        def fn(z, daa):
+            def df(Q):
+                x = softmax(Q)
+                s = x.reshape(-1, 1)
+                return (np.diagflat(s) - np.dot(s, s.T))
+            # z: (10)
+            # dfz: (10, 10)
+            # da: (10)
+            dfz = df(z)
+            return np.dot(dfz, daa)
+
+        dz = []
+        for b in range(da.shape[0]):
+            dz.append(fn(self.z[b, :], da[b, :]))
+        dz = np.array(dz)
+        return dz
 
     def update(self, optimizer: Optimizer):
         pass

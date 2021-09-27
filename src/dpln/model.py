@@ -42,10 +42,9 @@ class Sequential(Model):
         return z
 
     def backward(self, delta):
-        dx = delta
         for i in self.l[::-1]:
-            dx = i.backward(dx)
-        return dx
+            delta = i.backward(delta)
+        return delta
 
     def update(self):
         for i in self.l:
@@ -63,14 +62,14 @@ class Sequential(Model):
                 print("Epoch: {}\tStep: {}\tLoss: {}".format(
                     epoch + 1, i + 1, loss))
 
-    def train(self, train_dataset: Dataset, test_dataset: Dataset, epochs: int, verbose=True):
+    def train(self, train_ds: Dataset, test_ds: Dataset, epochs: int, verbose=True):
         for epoch in range(epochs):
-            self.train_step(train_dataset, epoch, verbose)
-            train_accu = self.accuracy(train_dataset)
-            test_accu = self.accuracy(test_dataset)
+            self.train_step(train_ds, epoch, verbose)
+            train_accu = self.accuracy(train_ds)
+            test_accu = self.accuracy(test_ds)
             self.train_accu.append(train_accu)
             self.test_accu.append(test_accu)
-            print("Epoch: {}\tTrain accuracy: {:.2f}\tTest accuracy: {:.2f}".format(
+            print("Epoch: {}\tTrain accuracy: {:.4f}\tTest accuracy: {:.4f}".format(
                 epoch + 1, train_accu, test_accu))
 
     def accuracy(self, dataset: Dataset) -> float:

@@ -14,6 +14,4 @@ def dump_pickle(obj: Any, filename: str):
 
 
 def random_initializer(shape):
-    # return np.zeros(shape=shape)
     return 0.1 * np.random.randn(*shape)
-    # return np.random.uniform(low=-0.01, high=0.01, size=shape)
