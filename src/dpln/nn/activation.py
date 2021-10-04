@@ -91,3 +91,20 @@ class Softmax(Module):
             dz.append(fn(self.z[b, :], da[b, :]))
         dz = np.array(dz)
         return dz
+
+
+class Tanh(Module):
+    def __init__(self):
+        super().__init__()
+        self.z = None
+        self.a = None
+
+    def forward(self, z: np.ndarray) -> np.ndarray:
+        self.z = z
+        self.a = np.tanh(z)
+        return self.a
+
+    def backward(self, da: np.ndarray) -> np.ndarray:
+        df = 1 - self.a**2
+        dz = da * df
+        return dz
