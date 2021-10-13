@@ -59,7 +59,7 @@ class Tensor:
         return sum(self)
 
     def __repr__(self) -> str:
-        return f"Tensor({self.data}, shape{self.shape}, requires_grad={self.requires_grad}, depends_on={self.dependencies})"
+        return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad}, dependencies={self.dependencies})"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Tensor):
@@ -73,46 +73,175 @@ def sum(t: Tensor) -> Tensor:
     """
     data = t.data.sum()
     requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
 
     if requires_grad:
         def grad_fn(grad: np.ndarray) -> np.ndarray:
             return grad * np.ones_like(t.data)
 
-        depends_on = [Dependency(t, grad_fn)]
+        dependencies.append(Dependency(t, grad_fn))
 
-    else:
-        depends_on = []
-    return Tensor(data, requires_grad, depends_on)
+    return Tensor(data, requires_grad, dependencies)
 
 
 def add(t1: Tensor, t2: Tensor) -> Tensor:
-    data = t1.data + t2.data
+    data = np.add(t1.data, t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
-
-    depends_on: List[Dependency] = []
+    dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
             for i, dim in enumerate(t1.shape):
                 if dim == 1:
-                    grad = grad.sum(axis=1, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t1, grad_fn1))
+
+    if t2.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            ndims_added = grad.ndim - t2.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t2.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t2, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def tensor_simple_add(t1: Tensor, t2: Tensor) -> Tensor:
+    data = t1.data + t2.data
+    requires_grad = t1.requires_grad or t2.requires_grad
+    depends_on: List[Dependency] = []
+
+    if t1.requires_grad:
+        def grad_fn(grad: np.ndarray) -> np.ndarray:
             return grad
 
         depends_on.append(Dependency(t1, grad_fn))
 
     if t2.requires_grad:
         def grad_fn(grad: np.ndarray) -> np.ndarray:
-            ndims_added = grad.ndim - t2.data.ndim
-            for _ in range(ndims_added):
-                grad = grad.sum(axis=0)
-            for i, dim in enumerate(t2.shape):
-                if dim == 1:
-                    grad = grad.sum(axis=1, keepdims=True)
             return grad
 
         depends_on.append(Dependency(t2, grad_fn))
 
     return Tensor(data, requires_grad, depends_on)
+
+
+def sub(t1: Tensor, t2: Tensor) -> Tensor:
+    data = t1.data - t2.data
+    requires_grad = t1.requires_grad or t2.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t1.requires_grad:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+            ndims_added = grad.ndim - t1.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t1.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t1, grad_fn1))
+
+    if t2.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            ndims_added = grad.ndim - t2.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t2.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return -grad
+
+        dependencies.append(Dependency(t2, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def neg(t: Tensor) -> Tensor:
+    data = np.negative(t.data)
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if requires_grad:
+        dependencies.append(Dependency(t, lambda x: -x))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def mul(t1: Tensor, t2: Tensor) -> Tensor:
+    data = t1.data * t2.data
+    requires_grad = t1.requires_grad or t2.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t1.requires_grad:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+            grad = grad * t2.data
+            ndims_added = grad.ndim - t1.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t1.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t1, grad_fn1))
+
+    if t2.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            grad = grad * t1.data
+            ndims_added = grad.ndim - t2.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t2.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t2, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def div(t1: Tensor, t2: Tensor) -> Tensor:
+    data = np.divide(t1.data, t2.data)
+    requires_grad = t1.requires_grad or t2.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t1.requires_grad:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+            grad = grad / t2.data
+            ndims_added = grad.ndim - t1.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t1.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t1, grad_fn1))
+
+    if t2.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            grad = - grad * t1.data / t2.data ** 2
+            ndims_added = grad.ndim - t2.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t2.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(t2, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
