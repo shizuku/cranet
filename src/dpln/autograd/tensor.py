@@ -84,6 +84,22 @@ def sum(t: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
+def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
+    return Tensor(np.zeros(shape=shape, dtype=dtype, order=order), requires_grad=requires_grad)
+
+
+def zeros_like(a, dtype=None, order='K', subok=True, shape=None, requires_grad=False) -> Tensor:
+    return Tensor(np.zeros_like(a=a, dtype=dtype, order=order, subok=subok, shape=shape), requires_grad=requires_grad)
+
+
+def ones(shape, dtype=None, order='C', *, like=None, requires_grad=False) -> Tensor:
+    return Tensor(np.ones(shape=shape, dtype=dtype, order=order, like=like), requires_grad=requires_grad)
+
+
+def ones_like(a, dtype=None, order='K', subok=True, shape=None, requires_grad=False) -> Tensor:
+    return Tensor(np.ones_like(a=a, dtype=dtype, order=order, subok=subok, shape=shape), requires_grad=requires_grad)
+
+
 def add(t1: Tensor, t2: Tensor) -> Tensor:
     data = np.add(t1.data, t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
