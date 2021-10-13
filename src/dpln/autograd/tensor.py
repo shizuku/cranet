@@ -116,26 +116,6 @@ def add(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def tensor_simple_add(t1: Tensor, t2: Tensor) -> Tensor:
-    data = t1.data + t2.data
-    requires_grad = t1.requires_grad or t2.requires_grad
-    depends_on: List[Dependency] = []
-
-    if t1.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
-            return grad
-
-        depends_on.append(Dependency(t1, grad_fn))
-
-    if t2.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
-            return grad
-
-        depends_on.append(Dependency(t2, grad_fn))
-
-    return Tensor(data, requires_grad, depends_on)
-
-
 def sub(t1: Tensor, t2: Tensor) -> Tensor:
     data = t1.data - t2.data
     requires_grad = t1.requires_grad or t2.requires_grad
