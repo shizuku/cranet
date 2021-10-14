@@ -18,6 +18,7 @@ class Dependency(NamedTuple):
 
 
 Arrayable = Union[float, list, np.ndarray]
+Tensorable = Union['Tensor', float, np.ndarray]
 
 
 def ensure_array(arrayable: Arrayable) -> np.ndarray:
@@ -25,9 +26,6 @@ def ensure_array(arrayable: Arrayable) -> np.ndarray:
         return arrayable
     else:
         return np.array(arrayable)
-
-
-Tensorable = Union['Tensor', float, np.ndarray]
 
 
 def ensure_tensor(tensorable: Tensorable) -> Tensor:
@@ -39,7 +37,7 @@ def ensure_tensor(tensorable: Tensorable) -> Tensor:
 
 class Tensor:
     def __init__(self, data: Arrayable, requires_grad: bool = False, dependencies: List[Dependency] = None) -> None:
-        self.data = ensure_array(data)
+        self._data = ensure_array(data)
         self.requires_grad = requires_grad
         self.dependencies = dependencies or []
         self.shape = self.data.shape
@@ -47,6 +45,16 @@ class Tensor:
 
         if self.requires_grad:
             self.zero_grad()
+
+    @property
+    def data(self) -> np.ndarray:
+        return self._data
+
+    @data.setter
+    def data(self, new: np.ndarray) -> None:
+        self._data = new
+        # detach gradient if set new data
+        self.grad = None
 
     def zero_grad(self) -> None:
         self.grad = Tensor(np.zeros_like(self.data))
@@ -59,7 +67,8 @@ class Tensor:
             if self.shape == ():
                 grad = Tensor(1)
             else:
-                raise RuntimeError("grad must be specified for non-zero-tensor")
+                raise RuntimeError(
+                    "grad must be specified for non-zero-tensor")
         self.grad.data += grad.data
 
         for dependency in self.dependencies:
@@ -72,6 +81,9 @@ class Tensor:
     def sum(self) -> Tensor:
         return _sum(self)
 
+    def numpy(self) -> np.ndarray:
+        return self.data
+
     def transpose(self, dim1: int, dim2: int) -> Tensor:
         return _transpose(self, dim1, dim2)
 
@@ -79,69 +91,85 @@ class Tensor:
         return _permute(self, axes)
 
     def __add__(self, other) -> Tensor:
-        """gets called if I do t + other"""
+        """called if `self + other`"""
         return _add(self, ensure_tensor(other))
 
     def __radd__(self, other) -> Tensor:
-        """gets called if I do other + t"""
+        """called if `other + self`"""
         return _add(ensure_tensor(other), self)
 
     def __iadd__(self, other) -> Tensor:
-        """when we do t += other"""
+        """called if `self += other`"""
         self.data = self.data + ensure_tensor(other).data
         return self
 
     def __sub__(self, other) -> Tensor:
+        """called if `self - other`"""
         return _sub(self, ensure_tensor(other))
 
     def __rsub__(self, other) -> Tensor:
+        """called if `other - self`"""
         return _sub(ensure_tensor(other), self)
 
     def __isub__(self, other) -> Tensor:
-        """when we do t -= other"""
+        """called if `self -= other`"""
         self.data = self.data - ensure_tensor(other).data
         return self
 
     def __neg__(self) -> Tensor:
+        """called if `-self`"""
         return _neg(self)
 
     def __mul__(self, other) -> Tensor:
+        """called if `self * other`"""
         return _mul(self, ensure_tensor(other))
 
     def __rmul__(self, other) -> Tensor:
+        """called if `other - self`"""
         return _mul(ensure_tensor(other), self)
 
     def __imul__(self, other) -> Tensor:
-        """when we do t *= other"""
+        """called if `self *= other`"""
         self.data = self.data * ensure_tensor(other).data
         return self
 
     def __truediv__(self, other) -> Tensor:
+        """called if `self / other`"""
         return _truediv(self, ensure_tensor(other))
 
     def __rtruediv__(self, other) -> Tensor:
+        """called if `other / self`"""
         return _truediv(ensure_tensor(other), self)
 
     def __itruediv__(self, other) -> Tensor:
+        """called if `self /= other`"""
         self.data = self.data / ensure_tensor(other).data
         return self
 
     def __matmul__(self, other) -> Tensor:
-        return _matmul(self, other)
+        """called if `self @ other`"""
+        return _matmul(self, ensure_tensor(other))
+
+    def __rmatmul__(self, other) -> Tensor:
+        """called if `other @ self`"""
+        return _matmul(ensure_tensor(other), self)
+
+    def __imatmul__(self, other) -> Tensor:
+        """called if `self @= other`"""
+        self.data = self.data @ ensure_tensor(other).data
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        """test if `self == other`"""
+        if not isinstance(other, Tensor):
+            return NotImplemented
+        return (self.data == other.data).all()
 
     def __getitem__(self, idxs):
         return _slice(self, idxs)
 
-    def numpy(self) -> np.ndarray:
-        return self.data
-
     def __repr__(self) -> str:
         return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad}, dependencies={self.dependencies})"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Tensor):
-            return NotImplemented
-        return (self.data == other.data).all()
 
 
 def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
