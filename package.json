@@ -1,0 +1,17 @@
+{
+  "name": "dpln-docs",
+  "home": "https://shizuku.github.io/dpln/",
+  "repository": "https://github.com/shizuku/dpln.git",
+  "author": "shizuku <2112165916@qq.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@vuepress/bundler-vite": "^2.0.0-beta.26",
+    "vuepress": "^2.0.0-beta.26"
+  },
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "dependencies": {}
+}

@@ -5,3 +5,7 @@ __pycache__
 
 dist
 dpln.egg-info
+
+node_modules
+.temp
+.cache
