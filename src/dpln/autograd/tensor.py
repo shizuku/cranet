@@ -11,6 +11,8 @@ from typing import (
 
 import numpy as np
 
+from .utils import invert_permutation
+
 
 class Dependency(NamedTuple):
     tensor: Tensor
@@ -56,6 +58,9 @@ class Tensor:
         # detach gradient if set new data
         self.grad = None
 
+    def numpy(self) -> np.ndarray:
+        return self.data
+
     def zero_grad(self) -> None:
         self.grad = Tensor(np.zeros_like(self.data))
 
@@ -75,28 +80,26 @@ class Tensor:
             backward_grad = dependency.grad_fn(grad.data)
             dependency.tensor.backward(Tensor(backward_grad))
 
-    def T(self):
-        pass
-
     def sum(self) -> Tensor:
-        return _sum(self)
-
-    def numpy(self) -> np.ndarray:
-        return self.data
+        return sum(self)
 
     def transpose(self, dim1: int, dim2: int) -> Tensor:
-        return _transpose(self, dim1, dim2)
+        return transpose(self, dim1, dim2)
 
     def permute(self, axes: Union[List, Tuple]) -> Tensor:
-        return _permute(self, axes)
+        return permute(self, axes)
+
+    @property
+    def T(self) -> Tensor:
+        return permute(self, list(range(len(self.shape) - 1, -1, -1)))
 
     def __add__(self, other) -> Tensor:
         """called if `self + other`"""
-        return _add(self, ensure_tensor(other))
+        return add(self, ensure_tensor(other))
 
     def __radd__(self, other) -> Tensor:
         """called if `other + self`"""
-        return _add(ensure_tensor(other), self)
+        return add(ensure_tensor(other), self)
 
     def __iadd__(self, other) -> Tensor:
         """called if `self += other`"""
@@ -105,11 +108,11 @@ class Tensor:
 
     def __sub__(self, other) -> Tensor:
         """called if `self - other`"""
-        return _sub(self, ensure_tensor(other))
+        return sub(self, ensure_tensor(other))
 
     def __rsub__(self, other) -> Tensor:
         """called if `other - self`"""
-        return _sub(ensure_tensor(other), self)
+        return sub(ensure_tensor(other), self)
 
     def __isub__(self, other) -> Tensor:
         """called if `self -= other`"""
@@ -118,15 +121,15 @@ class Tensor:
 
     def __neg__(self) -> Tensor:
         """called if `-self`"""
-        return _neg(self)
+        return neg(self)
 
     def __mul__(self, other) -> Tensor:
         """called if `self * other`"""
-        return _mul(self, ensure_tensor(other))
+        return mul(self, ensure_tensor(other))
 
     def __rmul__(self, other) -> Tensor:
         """called if `other - self`"""
-        return _mul(ensure_tensor(other), self)
+        return mul(ensure_tensor(other), self)
 
     def __imul__(self, other) -> Tensor:
         """called if `self *= other`"""
@@ -135,11 +138,11 @@ class Tensor:
 
     def __truediv__(self, other) -> Tensor:
         """called if `self / other`"""
-        return _truediv(self, ensure_tensor(other))
+        return truediv(self, ensure_tensor(other))
 
     def __rtruediv__(self, other) -> Tensor:
         """called if `other / self`"""
-        return _truediv(ensure_tensor(other), self)
+        return truediv(ensure_tensor(other), self)
 
     def __itruediv__(self, other) -> Tensor:
         """called if `self /= other`"""
@@ -148,16 +151,19 @@ class Tensor:
 
     def __matmul__(self, other) -> Tensor:
         """called if `self @ other`"""
-        return _matmul(self, ensure_tensor(other))
+        return matmul(self, ensure_tensor(other))
 
     def __rmatmul__(self, other) -> Tensor:
         """called if `other @ self`"""
-        return _matmul(ensure_tensor(other), self)
+        return matmul(ensure_tensor(other), self)
 
     def __imatmul__(self, other) -> Tensor:
         """called if `self @= other`"""
         self.data = self.data @ ensure_tensor(other).data
         return self
+
+    def __pow__(self, n):
+        return power(self, ensure_tensor(n))
 
     def __eq__(self, other: object) -> bool:
         """test if `self == other`"""
@@ -169,7 +175,7 @@ class Tensor:
         return _slice(self, idxs)
 
     def __repr__(self) -> str:
-        return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad}, dependencies={self.dependencies})"
+        return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad})"
 
 
 def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
@@ -190,7 +196,7 @@ def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:
     return Tensor(np.ones_like(a=a, dtype=dtype, shape=a.shape), requires_grad=requires_grad)
 
 
-def _sum(t: Tensor) -> Tensor:
+def sum(t: Tensor) -> Tensor:
     """
     Takes a tensor and return the sum of its components
     """
@@ -208,6 +214,7 @@ def _sum(t: Tensor) -> Tensor:
 
 
 def _slice(t: Tensor, idxs) -> Tensor:
+    # TODO: test
     data = t.data[idxs]
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
@@ -223,7 +230,7 @@ def _slice(t: Tensor, idxs) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _add(t1: Tensor, t2: Tensor) -> Tensor:
+def add(t1: Tensor, t2: Tensor) -> Tensor:
     data = np.add(t1.data, t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
@@ -255,7 +262,7 @@ def _add(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _sub(t1: Tensor, t2: Tensor) -> Tensor:
+def sub(t1: Tensor, t2: Tensor) -> Tensor:
     data = t1.data - t2.data
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
@@ -287,7 +294,7 @@ def _sub(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _neg(t: Tensor) -> Tensor:
+def neg(t: Tensor) -> Tensor:
     data = np.negative(t.data)
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
@@ -298,7 +305,7 @@ def _neg(t: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _mul(t1: Tensor, t2: Tensor) -> Tensor:
+def mul(t1: Tensor, t2: Tensor) -> Tensor:
     data = t1.data * t2.data
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
@@ -332,14 +339,15 @@ def _mul(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _truediv(t1: Tensor, t2: Tensor) -> Tensor:
+def truediv(t1: Tensor, t2: Tensor) -> Tensor:
+    # TODO: fix epsilon
     data = np.divide(t1.data, t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
         def grad_fn1(grad: np.ndarray) -> np.ndarray:
-            grad = grad / t2.data
+            grad = np.divide(grad, t2.data)
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -352,7 +360,9 @@ def _truediv(t1: Tensor, t2: Tensor) -> Tensor:
 
     if t2.requires_grad:
         def grad_fn2(grad: np.ndarray) -> np.ndarray:
-            grad = - grad * t1.data / t2.data ** 2
+            grad = - (grad / t2.data) * (t1.data / t2.data)
+            # grad = np.negative(np.divide(np.multiply(grad, t1.data), t2.data * t2.data))
+            # grad = np.negative(np.divide(np.multiply(grad, t1.data), np.power(t2.data, 2)))
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -366,7 +376,7 @@ def _truediv(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _matmul(t1: Tensor, t2: Tensor) -> Tensor:
+def matmul(t1: Tensor, t2: Tensor) -> Tensor:
     """
     if t1 is (n1, m1) and t2 is (m1, m2), then t1 @ t2 is (n1, m2)
     so grad3 is (n1, m2)
@@ -393,11 +403,47 @@ def _matmul(t1: Tensor, t2: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _dot(t1: Tensor, t2: Tensor) -> Tensor:
+def power(x: Tensor, e: Tensor) -> Tensor:
+    # TODO: fix epsilon
+    data = np.power(x.data, e.data)
+    requires_grad = x.requires_grad or e.requires_grad
+    dependencies: List[Dependency] = []
+
+    if x.requires_grad:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+            grad = grad * e.data * np.power(x.data, e.data - 1)
+            ndims_added = grad.ndim - x.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(x.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(x, grad_fn1))
+
+    if e.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            grad = grad * data * np.log(x.data)
+            ndims_added = grad.ndim - e.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(e.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
+
+        dependencies.append(Dependency(e, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def dot(t1: Tensor, t2: Tensor) -> Tensor:
+    # TODO: impl, test
     pass
 
 
-def _transpose(a: Tensor, dim1: int, dim2: int) -> Tensor:
+def transpose(a: Tensor, dim1: int, dim2: int) -> Tensor:
     data = np.swapaxes(a.data, dim1, dim2)
     requires_grad = a.requires_grad
     dependencies: List[Dependency] = []
@@ -411,14 +457,15 @@ def _transpose(a: Tensor, dim1: int, dim2: int) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def _permute(a: Tensor, axes: Union[List, Tuple]) -> Tensor:
+def permute(a: Tensor, axes: Union[List, Tuple]) -> Tensor:
     data = a.data.transpose(axes)
     requires_grad = a.requires_grad
     dependencies: List[Dependency] = []
 
     if a.requires_grad:
         def grad_fn(grad: np.ndarray) -> np.ndarray:
-            return grad.transpose(axes)
+            axes_t = invert_permutation(axes)
+            return grad.transpose(axes_t)
 
         dependencies.append(Dependency(a, grad_fn))
 
