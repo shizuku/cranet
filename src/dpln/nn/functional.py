@@ -1,21 +1,22 @@
+from ..autograd.tensor import Tensor, Dependency
+
 import numpy as np
-from numpy.testing._private.utils import requires_memory
-from ..autograd.tensor import Dependency, Tensor
 
 from typing import (
     Optional,
 )
 
 
-def linear(input: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
+def linear(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
     r"""
     Applies a linear transformation to the incoming data: :math:`y = Ax + b`.
     """
-    output = input.matmul(weight.t())
+    output = x @ weight
     if bias is None:
         output += bias
     ret = output
     return ret
+
 
 def bilinear(input1: Tensor, input2: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
     r"""
@@ -25,24 +26,24 @@ def bilinear(input1: Tensor, input2: Tensor, weight: Tensor, bias: Optional[Tens
     ...
 
 
-def l1_loss(input: Tensor, target: Tensor, reduction: str = 'mean') -> Tensor:
+def l1_loss(x: Tensor, target: Tensor, reduction: str = 'mean') -> Tensor:
     pass
 
 
-def mse_loss(input: Tensor, target: Tensor, reduction: str = 'mean') -> Tensor:
+def mse_loss(x: Tensor, target: Tensor, reduction: str = 'mean') -> Tensor:
     pass
 
 
 # TODO somewhere else
-def tanh(input: Tensor) -> Tensor:
-    data = np.tanh(input.data)
-    requires_grad = input.requires_grad
+def tanh(x: Tensor) -> Tensor:
+    data = np.tanh(x.data)
+    requires_grad = x.requires_grad
 
     if requires_grad:
         def grad_fn(grad: np.ndarray) -> np.ndarray:
             return grad * (1 - data * data)
-        
-        depends_on = [Dependency(input, grad_fn)]
+
+        depends_on = [Dependency(x, grad_fn)]
     else:
         depends_on = []
 

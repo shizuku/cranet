@@ -1,6 +1,8 @@
+import numpy as np
+
 from typing import List, TypeVar
 
-import numpy as np
+# TODO: refactor data
 
 T = TypeVar('T')
 

@@ -1,16 +1,14 @@
-from ..nn.modules.module import Module
+from ..nn.parameter import Parameter
+
+from typing import Iterator
 
 
 class Optimizer:
-
-    def __init__(self, module: Module, lr: float) -> None:
-        raise NotImplementedError
+    def __init__(self, parameters: Iterator[Parameter], *args, **kwargs) -> None:
+        self.parameters = list(parameters)
 
     def zero_grad(self) -> None:
-        if not self.module:
-            raise AttributeError(
-                "'NoneType' object has no attribute 'zero_grad'")
-        for parameter in self.module.parameters():
+        for parameter in self.parameters:
             parameter.zero_grad()
 
     def step(self, closure) -> None:

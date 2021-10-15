@@ -1,14 +1,17 @@
-import numpy as np
 from typing import (
     Tuple,
     Union,
     List,
 )
 
-shapeable = Union[Tuple, List]
+import numpy as np
+
+Shapable = Union[Tuple, List]
 
 
-def uniform_(shape: shapeable, a: float = 0., b: float = 1.) -> np.ndarray:
+# TODO: impl initializers
+
+def uniform_(shape: Shapable, a: float = 0., b: float = 1.) -> np.ndarray:
     r"""Fills the input Tensor with values drawn from the uniform
     distribution.
 
@@ -20,7 +23,7 @@ def uniform_(shape: shapeable, a: float = 0., b: float = 1.) -> np.ndarray:
     return np.random.uniform(a, b, shape)
 
 
-def normal_(shape: shapeable, mean: float = 0., std: float = 1.) -> np.ndarray:
+def normal_(shape: Shapable, mean: float = 0., std: float = 1.) -> np.ndarray:
     r"""Fills the input Tensor with values drawn from the normal
     distribution.
 
@@ -32,7 +35,7 @@ def normal_(shape: shapeable, mean: float = 0., std: float = 1.) -> np.ndarray:
     return np.random.normal(mean, std, shape)
 
 
-def constant_(shape: shapeable, val: np.scalar) -> np.ndarray:
+def constant_(shape: Shapable, val) -> np.ndarray:
     r"""Fills the input Tensor with the value :math:`\text{val}`.
 
     Args:
@@ -43,7 +46,7 @@ def constant_(shape: shapeable, val: np.scalar) -> np.ndarray:
     return np.full(shape, val)
 
 
-def ones_(shape: shapeable) -> np.ndarray:
+def ones_(shape: Shapable) -> np.ndarray:
     r"""Fills the input Tensor with the scalar value `1`.
 
     Args:
@@ -52,7 +55,7 @@ def ones_(shape: shapeable) -> np.ndarray:
     return np.ones(shape)
 
 
-def zeros_(shape: shapeable) -> np.ndarray:
+def zeros_(shape: Shapable) -> np.ndarray:
     r"""Fills the input Tensor with the scalar value `0`.
 
     Args:
@@ -61,7 +64,7 @@ def zeros_(shape: shapeable) -> np.ndarray:
     return np.zeros(shape)
 
 
-def eye_(shape: shapeable) -> np.ndarray:
+def eye_(shape: Shapable) -> np.ndarray:
     r"""Fills the 2-dimensional input `Tensor` with the identity
     matrix. Preserves the identity of the inputs in `Linear` layers, where as
     many inputs are preserved as possible.
@@ -72,7 +75,7 @@ def eye_(shape: shapeable) -> np.ndarray:
     return np.eye(*shape)
 
 
-def dirac_(shape: shapeable, groups: int = 1) -> np.ndarray:
+def dirac_(shape: Shapable, groups: int = 1) -> np.ndarray:
     r"""Fills the {3, 4, 5}-dimensional input `Tensor` with the Dirac
     delta function. Preserves the identi    dimensions = tensor.dim()
     if dimensions < 2:
@@ -97,7 +100,7 @@ def dirac_(shape: shapeable, groups: int = 1) -> np.ndarray:
     pass
 
 
-def _calculate_fan_in_and_fan_out(shape: shapeable):
+def _calculate_fan_in_and_fan_out(shape: Shapable):
     # dimensions = tensor.dim()
     # if dimensions < 2:
     #     raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
@@ -113,7 +116,8 @@ def _calculate_fan_in_and_fan_out(shape: shapeable):
     # return fan_in, fan_out
     pass
 
-def xavier_uniform_(shape: shapeable, gain: float = 1.) -> np.ndarray:
+
+def xavier_uniform_(shape: Shapable, gain: float = 1.) -> np.ndarray:
     r"""Fills the input `Tensor` with values according to the method
     described in `Understanding the difficulty of training deep feedforward
     neural networks` - Glorot, X. & Bengio, Y. (2010), using a uniform
@@ -132,7 +136,7 @@ def xavier_uniform_(shape: shapeable, gain: float = 1.) -> np.ndarray:
     return
 
 
-def xavier_normal_(shape: shapeable, gain=1.) -> np.ndarray:
+def xavier_normal_(shape: Shapable, gain=1.) -> np.ndarray:
     r"""Fills the input `Tensor` with values according to the method
     described in `Understanding the difficulty of training deep feedforward
     neural networks` - Glorot, X. & Bengio, Y. (2010), using a normal

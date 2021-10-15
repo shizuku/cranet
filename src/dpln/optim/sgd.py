@@ -1,13 +1,14 @@
-from src.dpln.nn.parameter import Parameter
-from ..nn.modules.module import Module
-    
-class SGD:
-    def __init__(self, module: Module, lr: float = 0.01) -> None:
-        if not issubclass(module, Module):
-            raise ValueError("for a optimizer, the first parameter must be a `Module` object or it's subclass ")
-        self.module = module
+from .optimizer import Optimizer
+from ..nn.parameter import Parameter
+
+from typing import Iterator
+
+
+class SGD(Optimizer):
+    def __init__(self, parameters: Iterator[Parameter], lr: float = 0.01, *args, **kwargs) -> None:
+        super().__init__(parameters, *args, **kwargs)
         self.lr = lr
 
     def step(self) -> None:
-        for parameter in self.module.parameters():
+        for parameter in self.parameters:
             parameter -= parameter.grad * self.lr

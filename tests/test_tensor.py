@@ -27,7 +27,7 @@ class TestTensor(unittest.TestCase):
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13))
             b0.backward(dpln.ones_like(b0))
             b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
@@ -38,7 +38,7 @@ class TestTensor(unittest.TestCase):
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
             b0.backward(dpln.ones_like(b0))
             b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
     def test_add(self):
         for _ in range(100):
@@ -52,9 +52,9 @@ class TestTensor(unittest.TestCase):
             c1 = a1 + b1
             c0.backward(dpln.ones_like(c0))
             c1.backward(torch.ones_like(c1))
-            self.assertTrue((c0.numpy() == c1.detach().numpy()).all())
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
-            self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
@@ -67,9 +67,9 @@ class TestTensor(unittest.TestCase):
             c1 = a1 + b1
             c0.backward(dpln.ones_like(c0))
             c1.backward(torch.ones_like(c1))
-            self.assertTrue((c0.numpy() == c1.detach().numpy()).all())
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
-            self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
     def test_sub(self):
         for _ in range(100):
@@ -144,6 +144,21 @@ class TestTensor(unittest.TestCase):
             self.assertTrue((c0.numpy() == c1.detach().numpy()).all())
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
             self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
+
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6)
+            b = np.random.rand(1)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = dpln.Tensor(b, requires_grad=True)
+            b1 = torch.tensor(b, requires_grad=True)
+            c0 = a0 * b0
+            c1 = a1 * b1
+            c0.backward(dpln.ones_like(c0))
+            c1.backward(torch.ones_like(c1))
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-10))
 
     def test_truediv(self):
         for _ in range(100):

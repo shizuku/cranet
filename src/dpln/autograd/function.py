@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
-
 from .tensor import Tensor, Dependency
+
+import numpy as np
 
 
 def log(x: Tensor) -> Tensor:

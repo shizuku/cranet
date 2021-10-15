@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from .utils import invert_permutation
+
+import numpy as np
+
 from typing import (
     List,
     Tuple,
@@ -8,10 +12,6 @@ from typing import (
     Optional,
     Union
 )
-
-import numpy as np
-
-from .utils import invert_permutation
 
 
 class Dependency(NamedTuple):
@@ -169,6 +169,8 @@ class Tensor:
         """test if `self == other`"""
         if not isinstance(other, Tensor):
             return NotImplemented
+        if self.data.shape != other.data.shape:
+            return False
         return (self.data == other.data).all()
 
     def __getitem__(self, idxs):
@@ -176,6 +178,9 @@ class Tensor:
 
     def __repr__(self) -> str:
         return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad})"
+
+    def __hash__(self):
+        return hash(str(self.data.data))
 
 
 def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
@@ -186,8 +191,8 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None, requires_grad=F
     return Tensor(np.zeros_like(a=a, dtype=dtype, order=order, subok=subok, shape=shape), requires_grad=requires_grad)
 
 
-def ones(shape, dtype=None, order='C', *, like=None, requires_grad=False) -> Tensor:
-    return Tensor(np.ones(shape=shape, dtype=dtype, order=order, like=like), requires_grad=requires_grad)
+def ones(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
+    return Tensor(np.ones(shape=shape, dtype=dtype, order=order), requires_grad=requires_grad)
 
 
 def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:

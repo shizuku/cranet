@@ -1,6 +1,6 @@
-import numpy as np
+from .tensor import Tensor
 
-from src.dpln.autograd import Tensor
+import numpy as np
 
 
 def normal(shape, loc=0.0, scale=1.0, requires_grad=False) -> Tensor:
