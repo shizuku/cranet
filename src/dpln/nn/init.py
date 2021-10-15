@@ -1,83 +1,119 @@
-from src.dpln.autograd.tensor import Tensor
+import numpy as np
+from typing import (
+    Tuple,
+    Union,
+    List,
+)
+
+shapeable = Union[Tuple, List]
 
 
-def uniform(tensor: Tensor, a=0., b=1.):
+def uniform_(shape: shapeable, a: float = 0., b: float = 1.) -> np.ndarray:
     r"""Fills the input Tensor with values drawn from the uniform
-    distribution :math:`\mathcal{U}(a, b)`.
+    distribution.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
+        shape: tuple or list which determines the shape of initialization matrix
         a: the lower bound of the uniform distribution
         b: the upper bound of the uniform distribution
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.uniform_(w)
     """
-    ...
+    return np.random.uniform(a, b, shape)
 
 
-def normal(tensor: Tensor, mean: float = 0., std: float = 1.) -> Tensor:
-    # type: (Tensor, float, float) -> Tensor
+def normal_(shape: shapeable, mean: float = 0., std: float = 1.) -> np.ndarray:
     r"""Fills the input Tensor with values drawn from the normal
-    distribution :math:`\mathcal{N}(\text{mean}, \text{std}^2)`.
+    distribution.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
+        shape: tuple or list which determines the shape of initialization matrix
         mean: the mean of the normal distribution
         std: the standard deviation of the normal distribution
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.normal_(w)
     """
-    ...
+    return np.random.normal(mean, std, shape)
 
 
-def ones(tensor: Tensor) -> Tensor:
-    # type: (Tensor) -> Tensor
+def constant_(shape: shapeable, val: np.scalar) -> np.ndarray:
+    r"""Fills the input Tensor with the value :math:`\text{val}`.
+
+    Args:
+        shape: tuple or list which determines the shape of initialization matrix
+        val: the value to fill the tensor with
+
+    """
+    return np.full(shape, val)
+
+
+def ones_(shape: shapeable) -> np.ndarray:
     r"""Fills the input Tensor with the scalar value `1`.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.ones_(w)
+        shape: tuple or list which determines the shape of initialization matrix
     """
-    ...
+    return np.ones(shape)
 
 
-def zeros(tensor: Tensor) -> Tensor:
-    # type: (Tensor) -> Tensor
+def zeros_(shape: shapeable) -> np.ndarray:
     r"""Fills the input Tensor with the scalar value `0`.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.zeros_(w)
+        shape: tuple or list which determines the shape of initialization matrix
     """
+    return np.zeros(shape)
 
-def dirac_(tensor, groups=1):
+
+def eye_(shape: shapeable) -> np.ndarray:
+    r"""Fills the 2-dimensional input `Tensor` with the identity
+    matrix. Preserves the identity of the inputs in `Linear` layers, where as
+    many inputs are preserved as possible.
+
+    Args:
+        shape:
+    """
+    return np.eye(*shape)
+
+
+def dirac_(shape: shapeable, groups: int = 1) -> np.ndarray:
     r"""Fills the {3, 4, 5}-dimensional input `Tensor` with the Dirac
-    delta function. Preserves the identity of the inputs in `Convolutional`
+    delta function. Preserves the identi    dimensions = tensor.dim()
+    if dimensions < 2:
+        raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
+
+    num_input_fmaps = tensor.size(1)
+    num_output_fmaps = tensor.size(0)
+    receptive_field_size = 1
+    if tensor.dim() > 2:
+        receptive_field_size = tensor[0][0].numel()
+    fan_in = num_input_fmaps * receptive_field_size
+    fan_out = num_output_fmaps * receptive_field_size
+
+    return fan_in, fan_outty of the inputs in `Convolutional`
     layers, where as many input channels are preserved as possible. In case
     of groups>1, each group of channels preserves identity
 
     Args:
-        tensor: a {3, 4, 5}-dimensional `torch.Tensor`
+        shape: tuple or list which determines the shape of initialization matrix
         groups (optional): number of groups in the conv layer (default: 1)
-    Examples:
-        >>> w = torch.empty(3, 16, 5, 5)
-        >>> nn.init.dirac_(w)
-        >>> w = torch.empty(3, 24, 5, 5)
-        >>> nn.init.dirac_(w, 3)
     """
+    pass
 
-def xavier_uniform_(tensor, gain=1.):
-    # type: (Tensor, float) -> Tensor
+
+def _calculate_fan_in_and_fan_out(shape: shapeable):
+    # dimensions = tensor.dim()
+    # if dimensions < 2:
+    #     raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
+    #
+    # num_input_fmaps = tensor.size(1)
+    # num_output_fmaps = tensor.size(0)
+    # receptive_field_size = 1
+    # if tensor.dim() > 2:
+    #     receptive_field_size = tensor[0][0].numel()
+    # fan_in = num_input_fmaps * receptive_field_size
+    # fan_out = num_output_fmaps * receptive_field_size
+    #
+    # return fan_in, fan_out
+    pass
+
+def xavier_uniform_(shape: shapeable, gain: float = 1.) -> np.ndarray:
     r"""Fills the input `Tensor` with values according to the method
     described in `Understanding the difficulty of training deep feedforward
     neural networks` - Glorot, X. & Bengio, Y. (2010), using a uniform
@@ -90,16 +126,13 @@ def xavier_uniform_(tensor, gain=1.):
     Also known as Glorot initialization.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
+        shape: tuple or list which determines the shape of initialization matrix
         gain: an optional scaling factor
-
-    Examples:
-        >>> w = torch.empty(3, 5)
-        >>> nn.init.xavier_uniform_(w, gain=nn.init.calculate_gain('relu'))
     """
+    return
 
-def xavier_normal_(tensor, gain=1.):
-    # type: (Tensor, float) -> Tensor
+
+def xavier_normal_(shape: shapeable, gain=1.) -> np.ndarray:
     r"""Fills the input `Tensor` with values according to the method
     described in `Understanding the difficulty of training deep feedforward
     neural networks` - Glorot, X. & Bengio, Y. (2010), using a normal
@@ -112,13 +145,15 @@ def xavier_normal_(tensor, gain=1.):
     Also known as Glorot initialization.
 
     Args:
-        tensor: an n-dimensional `torch.Tensor`
+        shape: tuple or list which determines the shape of initialization matrix
         gain: an optional scaling factor
 
     Examples:
         >>> w = torch.empty(3, 5)
         >>> nn.init.xavier_normal_(w)
     """
+    return
+
 
 def kaiming_uniform_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     r"""Fills the input `Tensor` with values according to the method
@@ -148,6 +183,7 @@ def kaiming_uniform_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
         >>> nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
     """
 
+
 def kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     r"""Fills the input `Tensor` with values according to the method
     described in `Delving deep into rectifiers: Surpassing human-level
@@ -175,6 +211,7 @@ def kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_relu'):
         >>> w = torch.empty(3, 5)
         >>> nn.init.kaiming_normal_(w, mode='fan_out', nonlinearity='relu')
     """
+
 
 def sparse_(tensor, sparsity, std=0.01):
     r"""Fills the 2D input `Tensor` as a sparse matrix, where the
