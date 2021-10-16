@@ -233,8 +233,7 @@ def sum(t: Tensor) -> Tensor:
 
 def mean(t: Tensor) -> Tensor:
     # TODO: test, support axis param
-    a = t.sum()
-    return a / a.numel()
+    return t.sum() / t.numel()
 
 
 def _slice(t: Tensor, idxs) -> Tensor:
@@ -492,5 +491,14 @@ def permute(a: Tensor, axes: Union[List, Tuple]) -> Tensor:
             return grad.transpose(axes_t)
 
         dependencies.append(Dependency(a, grad_fn))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def concat(tensors: List[Tensor], axis=0) -> Tensor:
+    # TODO: impl
+    data = np.concatenate([i.data for i in tensors], axis=axis)
+    requires_grad = True in [i.requires_grad for i in tensors]
+    dependencies: List[Dependency] = []
 
     return Tensor(data, requires_grad, dependencies)
