@@ -6,6 +6,9 @@ import unittest
 import numpy as np
 import torch
 
+from torch.nn import functional as torch_F
+from src.dpln.nn import functional as dpln_F
+
 from src import dpln
 
 
@@ -367,6 +370,8 @@ class TestTensor(unittest.TestCase):
             b0.backward(dpln.ones_like(b0))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+
+class TestFunction(unittest.TestCase):
     def test_log(self):
         for _ in range(100):
             a = np.random.rand(3)
@@ -411,6 +416,54 @@ class TestTensor(unittest.TestCase):
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
             b0.backward(dpln.ones_like(b0))
             b1.backward(torch.ones_like(b1))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_relu(self):
+        for _ in range(100):
+            a = np.random.rand(13, 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln_F.relu(a0)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch_F.relu(a1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b1.backward(torch.ones_like(b1) * 0.1)
+            b0.backward(dpln.ones_like(b0) * 0.1)
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_sigmoid(self):
+        for _ in range(100):
+            a = np.random.rand(13, 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln_F.sigmoid(a0)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch_F.sigmoid(a1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b1.backward(torch.ones_like(b1) * 0.1)
+            b0.backward(dpln.ones_like(b0) * 0.1)
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_softmax(self):
+        for _ in range(100):
+            a = np.random.rand(13, 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln_F.softmax(a0, axis=-1)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch_F.softmax(a1, dim=-1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b1.backward(torch.ones_like(b1) * 0.1)
+            b0.backward(dpln.ones_like(b0) * 0.1)
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_tanh(self):
+        for _ in range(100):
+            a = np.random.rand(13, 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln_F.tanh(a0)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch_F.tanh(a1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b1.backward(torch.ones_like(b1) * 0.1)
+            b0.backward(dpln.ones_like(b0) * 0.1)
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
 
