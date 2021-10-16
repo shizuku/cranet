@@ -16,6 +16,9 @@ class _Loss(Module, ABC):
         super().__init__()
         self.reduction = reduction
 
+    def __call__(self, inp: Tensor, tar: Tensor):
+        return self.forward(inp, tar)
+
 
 class _WeightedLoss(_Loss, ABC):
     def __init__(self, weight: Optional[Tensor] = None, reduction: str = 'mean') -> None:

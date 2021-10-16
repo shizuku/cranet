@@ -15,8 +15,8 @@ class Linear(Module):
     __constants__ = ['in_features', 'out_features']
     in_features: int
     out_features: int
-    weight: Tensor
-    bias: Optional[Tensor]
+    weight: Parameter
+    bias: Optional[Parameter]
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True) -> None:
         super().__init__()
