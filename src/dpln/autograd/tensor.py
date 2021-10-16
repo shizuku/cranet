@@ -80,8 +80,19 @@ class Tensor:
             backward_grad = dependency.grad_fn(grad.data)
             dependency.tensor.backward(Tensor(backward_grad))
 
+    def dim(self) -> int:
+        """Number of self.data dimensions"""
+        return self._data.ndim()
+
+    def numel(self) -> int:
+        """the product of the self.data’s dimensions."""
+        return self._data.size
+
     def sum(self) -> Tensor:
         return sum(self)
+
+    def mean(self) -> Tensor:
+        return mean(self)
 
     def transpose(self, dim1: int, dim2: int) -> Tensor:
         return transpose(self, dim1, dim2)
@@ -163,6 +174,7 @@ class Tensor:
         return self
 
     def __pow__(self, n):
+        """called if `self ** other`"""
         return power(self, ensure_tensor(n))
 
     def __eq__(self, other: object) -> bool:
@@ -202,6 +214,7 @@ def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:
 
 
 def sum(t: Tensor) -> Tensor:
+    # TODO: test, support axis param
     """
     Takes a tensor and return the sum of its components
     """
@@ -216,6 +229,12 @@ def sum(t: Tensor) -> Tensor:
         dependencies.append(Dependency(t, grad_fn))
 
     return Tensor(data, requires_grad, dependencies)
+
+
+def mean(t: Tensor) -> Tensor:
+    # TODO: test, support axis param
+    a = t.sum()
+    return a / a.numel()
 
 
 def _slice(t: Tensor, idxs) -> Tensor:

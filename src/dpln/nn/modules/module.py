@@ -201,6 +201,28 @@ class Module:
                 for m in module.named_modules(memo, submodule_prefix, remove_duplicate):
                     yield m
 
+    def children(self) -> Iterator['Module']:
+        r"""Returns an iterator over immediate children modules.
+
+        Yields:
+            Module: a child module
+        """
+        for name, module in self.named_children():
+            yield module
+
+    def named_children(self) -> Iterator[Tuple[str, 'Module']]:
+        r"""Returns an iterator over immediate children modules, yielding both
+        the name of the module as well as the module itself.
+
+        Yields:
+            (string, Module): Tuple containing a name and child module
+        """
+        memo = set()
+        for name, module in self._modules.items():
+            if module is not None and module not in memo:
+                memo.add(module)
+                yield name, module
+
     def parameters(self, recurse: bool = True) -> Iterator[Parameter]:
         for name, param in self.named_parameters(recurse=recurse):
             yield param

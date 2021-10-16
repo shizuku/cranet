@@ -44,4 +44,10 @@ class MSELoss(_Loss):
 
 
 class CrossEntropyLoss(_WeightedLoss):
-    ...
+    __constants__ = ['reduction']
+
+    def __init__(self, weight: Optional[Tensor] = None, reduction: str = 'mean') -> None:
+        super().__init__(weight, reduction)
+
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        return F.cross_entropy(x, y, weight=self.weight, reduction=self.reduction)
