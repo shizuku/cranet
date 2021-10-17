@@ -9,6 +9,6 @@ class SGD(Optimizer):
         super().__init__(parameters, *args, **kwargs)
         self.lr = lr
 
-    def step(self) -> None:
+    def step(self, **kwargs) -> None:
         for parameter in self.parameters:
             parameter -= parameter.grad * self.lr

@@ -370,6 +370,44 @@ class TestTensor(unittest.TestCase):
             b0.backward(dpln.ones_like(b0))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_concat2(self):
+        for _ in range(1000):
+            a1 = np.random.rand(5, 3, 4, 10)
+            a2 = np.random.rand(5, 3, 4, 10)
+            t1 = torch.tensor(a1.copy(), requires_grad=True)
+            t2 = torch.tensor(a2.copy(), requires_grad=True)
+            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+            # print(d1.shape, d2.shape)
+            axis = np.random.randint(a1.ndim-1)
+            t_cat = torch.cat((t1, t2), axis)
+            d_cat = dpln.concat2(d1, d2, axis)
+            self.assertTrue((d_cat.numpy() == t_cat.detach().numpy()).all())
+
+            t_cat.backward(torch.ones_like(t_cat))
+            d_cat.backward(dpln.ones_like(d_cat))
+            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+
+    def test_concat(self):
+        for _ in range(1000):
+            pass
+            # a1 = np.random.rand(5, 3, 4)
+            # a2 = np.random.rand(5, 3, 4)
+            # t1 = torch.tensor(a1.copy(), requires_grad=True)
+            # t2 = torch.tensor(a2.copy(), requires_grad=True)
+            # d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            # d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+            # # print(d1.shape, d2.shape)
+            # t_cat = torch.cat((t1, t2), 0)
+            # d_cat = dpln.concat2(d1, d2, 0)
+            # self.assertTrue((d_cat.numpy() == t_cat.detach().numpy()).all())
+            #
+            # t_cat.backward(torch.ones_like(t_cat))
+            # d_cat.backward(dpln.ones_like(d_cat))
+            # self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            # self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+
 
 class TestFunction(unittest.TestCase):
     def test_log(self):
@@ -465,6 +503,17 @@ class TestFunction(unittest.TestCase):
             b1.backward(torch.ones_like(b1) * 0.1)
             b0.backward(dpln.ones_like(b0) * 0.1)
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_flatten(self):
+        for _ in range(1):
+            a = np.random.rand(2, 2, 2)
+            t = torch.tensor(a, requires_grad=True)
+            z = torch.flatten(t)
+            z.backward(torch.ones_like(z))
+            print()
+            print(t.grad)
+            print(t.grad.size())
+            print(z.size())
 
 
 if __name__ == '__main__':
