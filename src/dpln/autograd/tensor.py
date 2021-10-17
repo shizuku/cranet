@@ -7,10 +7,11 @@ import numpy as np
 from typing import (
     List,
     Tuple,
-    NamedTuple,
+    Union,
+    Sequence,
     Callable,
     Optional,
-    Union
+    NamedTuple
 )
 
 
@@ -250,13 +251,12 @@ def concat2(t1: Tensor, t2: Tensor, axis: int = 0) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def concat(t: List[Tensor], axis: int = 0) -> Tensor:
-    # TODO: impl grad
-    # data = np.concatenate([i.data for i in t], axis=axis)
-    # requires_grad = True in [i.requires_grad for i in t]
-    # dependencies: List[Dependency] = []
-    # return concat(t[0], t[1:])
-    pass
+def concat(t: Sequence[Tensor], axis: int = 0) -> Tensor:
+    out = t[0]
+    for i in range(1, len(t)):
+        out = concat2(out, t[i], axis)
+
+    return out
 
 
 def sum(t: Tensor) -> Tensor:
