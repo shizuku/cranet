@@ -379,7 +379,7 @@ class TestTensor(unittest.TestCase):
             d1 = dpln.Tensor(a1.copy(), requires_grad=True)
             d2 = dpln.Tensor(a2.copy(), requires_grad=True)
             # print(d1.shape, d2.shape)
-            axis = np.random.randint(a1.ndim-1)
+            axis = np.random.randint(a1.ndim - 1)
             t_cat = torch.cat((t1, t2), axis)
             d_cat = dpln.concat2(d1, d2, axis)
             self.assertTrue((d_cat.numpy() == t_cat.detach().numpy()).all())
@@ -391,22 +391,76 @@ class TestTensor(unittest.TestCase):
 
     def test_concat(self):
         for _ in range(1000):
-            pass
-            # a1 = np.random.rand(5, 3, 4)
-            # a2 = np.random.rand(5, 3, 4)
-            # t1 = torch.tensor(a1.copy(), requires_grad=True)
-            # t2 = torch.tensor(a2.copy(), requires_grad=True)
-            # d1 = dpln.Tensor(a1.copy(), requires_grad=True)
-            # d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-            # # print(d1.shape, d2.shape)
-            # t_cat = torch.cat((t1, t2), 0)
-            # d_cat = dpln.concat2(d1, d2, 0)
-            # self.assertTrue((d_cat.numpy() == t_cat.detach().numpy()).all())
-            #
-            # t_cat.backward(torch.ones_like(t_cat))
-            # d_cat.backward(dpln.ones_like(d_cat))
-            # self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            # self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+            a1 = np.random.rand(5)
+            a2 = np.random.rand(2)
+            t1 = torch.tensor(a1.copy(), requires_grad=True)
+            t2 = torch.tensor(a2.copy(), requires_grad=True)
+            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+
+            axis = np.random.randint(a1.ndim - 1)
+            t_cat = torch.cat((t1, t2, t1), axis)
+            d_cat = dpln.concat((d1, d2, d1), axis)
+            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
+
+            t_cat.backward(torch.ones_like(t_cat))
+            d_cat.backward(dpln.ones_like(d_cat))
+            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+
+        for _ in range(1000):
+            a1 = np.random.rand(5, 3)
+            a2 = np.random.rand(5, 3)
+            t1 = torch.tensor(a1.copy(), requires_grad=True)
+            t2 = torch.tensor(a2.copy(), requires_grad=True)
+            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+
+            axis = np.random.randint(a1.ndim - 1)
+            t_cat = torch.cat((t1, t2, t1), axis)
+            d_cat = dpln.concat((d1, d2, d1), axis)
+            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
+
+            t_cat.backward(torch.ones_like(t_cat))
+            d_cat.backward(dpln.ones_like(d_cat))
+            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+
+        for _ in range(100):
+            a1 = np.random.rand(5, 3, 4, 10, 2)
+            a2 = np.random.rand(5, 3, 4, 10, 2)
+            t1 = torch.tensor(a1.copy(), requires_grad=True)
+            t2 = torch.tensor(a2.copy(), requires_grad=True)
+            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+
+            axis = np.random.randint(a1.ndim - 1)
+            t_cat = torch.cat((t1, t2, t1), axis)
+            d_cat = dpln.concat((d1, d2, d1), axis)
+            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
+
+            t_cat.backward(torch.ones_like(t_cat))
+            d_cat.backward(dpln.ones_like(d_cat))
+            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+
+        for _ in range(100):
+            a1 = np.random.rand(5, 3, 4, 1, 2)
+            a2 = np.random.rand(5, 3, 4, 10, 2)
+            t1 = torch.tensor(a1.copy(), requires_grad=True)
+            t2 = torch.tensor(a2.copy(), requires_grad=True)
+            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
+            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
+
+            axis = 3
+            t_cat = torch.cat((t1, t2, t1), axis)
+            d_cat = dpln.concat((d1, d2, d1), axis)
+            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
+
+            t_cat.backward(torch.ones_like(t_cat))
+            d_cat.backward(dpln.ones_like(d_cat))
+            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
+            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
 
 
 class TestFunction(unittest.TestCase):
