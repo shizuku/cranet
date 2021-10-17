@@ -55,7 +55,7 @@ class Tensor:
     @data.setter
     def data(self, new: np.ndarray) -> None:
         self._data = new
-        # detach gradient if set new data
+        # detach gradient if set new datasets
         self.grad = None
 
     def numpy(self) -> np.ndarray:
@@ -81,11 +81,11 @@ class Tensor:
             dependency.tensor.backward(Tensor(backward_grad))
 
     def dim(self) -> int:
-        """Number of self.data dimensions"""
-        return self._data.ndim()
+        """Number of self.datasets dimensions"""
+        return self._data.ndim
 
     def numel(self) -> int:
-        """the product of the self.data’s dimensions."""
+        """the product of the self.datasets’s dimensions."""
         return self._data.size
 
     def sum(self) -> Tensor:
@@ -213,6 +213,52 @@ def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:
     return Tensor(np.ones_like(a=a, dtype=dtype, shape=a.shape), requires_grad=requires_grad)
 
 
+def _slice(t: Tensor, idxs) -> Tensor:
+    # TODO: test
+    data = t.data[idxs]
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if requires_grad:
+        def grad_fn(grad: np.ndarray) -> np.ndarray:
+            bigger_grad = np.zeros_like(data)
+            bigger_grad[idxs] = grad
+            return bigger_grad
+
+        dependencies.append(Dependency(t, grad_fn))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def concat2(t1: Tensor, t2: Tensor, axis: int = 0) -> Tensor:
+    data = np.concatenate((t1.data, t2.data), axis=axis)
+    requires_grad = t1.requires_grad or t2.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t1.requires_grad:
+        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+            return np.ones_like(t1.data)
+
+        dependencies.append(Dependency(t1, grad_fn1))
+
+    if t2.requires_grad:
+        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+            return np.ones_like(t2.data)
+
+        dependencies.append(Dependency(t2, grad_fn2))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def concat(t: List[Tensor], axis: int = 0) -> Tensor:
+    # TODO: impl grad
+    # data = np.concatenate([i.data for i in t], axis=axis)
+    # requires_grad = True in [i.requires_grad for i in t]
+    # dependencies: List[Dependency] = []
+    # return concat(t[0], t[1:])
+    pass
+
+
 def sum(t: Tensor) -> Tensor:
     # TODO: test, support axis param
     """
@@ -234,23 +280,6 @@ def sum(t: Tensor) -> Tensor:
 def mean(t: Tensor) -> Tensor:
     # TODO: test, support axis param
     return t.sum() / t.numel()
-
-
-def _slice(t: Tensor, idxs) -> Tensor:
-    # TODO: test
-    data = t.data[idxs]
-    requires_grad = t.requires_grad
-    dependencies: List[Dependency] = []
-
-    if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
-            bigger_grad = np.zeros_like(data)
-            bigger_grad[idxs] = grad
-            return bigger_grad
-
-        dependencies.append(Dependency(t, grad_fn))
-
-    return Tensor(data, requires_grad, dependencies)
 
 
 def add(t1: Tensor, t2: Tensor) -> Tensor:
@@ -384,8 +413,8 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
     if t2.requires_grad:
         def grad_fn2(grad: np.ndarray) -> np.ndarray:
             grad = - (grad / t2.data) * (t1.data / t2.data)
-            # grad = np.negative(np.divide(np.multiply(grad, t1.data), t2.data * t2.data))
-            # grad = np.negative(np.divide(np.multiply(grad, t1.data), np.power(t2.data, 2)))
+            # grad = np.negative(np.divide(np.multiply(grad, t1.datasets), t2.datasets * t2.datasets))
+            # grad = np.negative(np.divide(np.multiply(grad, t1.datasets), np.power(t2.datasets, 2)))
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -491,14 +520,5 @@ def permute(a: Tensor, axes: Union[List, Tuple]) -> Tensor:
             return grad.transpose(axes_t)
 
         dependencies.append(Dependency(a, grad_fn))
-
-    return Tensor(data, requires_grad, dependencies)
-
-
-def concat(tensors: List[Tensor], axis=0) -> Tensor:
-    # TODO: impl
-    data = np.concatenate([i.data for i in tensors], axis=axis)
-    requires_grad = True in [i.requires_grad for i in tensors]
-    dependencies: List[Dependency] = []
 
     return Tensor(data, requires_grad, dependencies)
