@@ -11,10 +11,9 @@ def linear(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
     Applies a linear transformation to the incoming datasets: :math:`y = Ax + b`.
     """
     output = x @ weight
-    if bias is None:
-        output += bias
-    ret = output
-    return ret
+    if bias is not None:
+        return output + bias
+    return output
 
 
 def relu(x: Tensor) -> Tensor:
