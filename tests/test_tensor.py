@@ -370,97 +370,50 @@ class TestTensor(unittest.TestCase):
             b0.backward(dpln.ones_like(b0))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
-    def test_concat2(self):
-        for _ in range(1000):
-            a1 = np.random.rand(5, 3, 4, 10)
-            a2 = np.random.rand(5, 3, 4, 10)
-            t1 = torch.tensor(a1.copy(), requires_grad=True)
-            t2 = torch.tensor(a2.copy(), requires_grad=True)
-            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
-            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-            # print(d1.shape, d2.shape)
-            axis = np.random.randint(a1.ndim - 1)
-            t_cat = torch.cat((t1, t2), axis)
-            d_cat = dpln.concat2(d1, d2, axis)
-            self.assertTrue((d_cat.numpy() == t_cat.detach().numpy()).all())
-
-            t_cat.backward(torch.ones_like(t_cat))
-            d_cat.backward(dpln.ones_like(d_cat))
-            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
-
     def test_concat(self):
         for _ in range(1000):
-            a1 = np.random.rand(5)
-            a2 = np.random.rand(2)
+            a1 = np.random.rand(1, 3, 4)
+            a2 = np.random.rand(1, 3, 4)
+            delta = np.random.rand(2, 3, 4)
             t1 = torch.tensor(a1.copy(), requires_grad=True)
             t2 = torch.tensor(a2.copy(), requires_grad=True)
             d1 = dpln.Tensor(a1.copy(), requires_grad=True)
             d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-
-            axis = np.random.randint(a1.ndim - 1)
-            t_cat = torch.cat((t1, t2, t1), axis)
-            d_cat = dpln.concat((d1, d2, d1), axis)
-            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
-
-            t_cat.backward(torch.ones_like(t_cat))
-            d_cat.backward(dpln.ones_like(d_cat))
-            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+            t0 = torch.cat((t1, t2), 0)
+            d0 = dpln.concat((d1, d2), 0)
+            self.assertTrue(np_feq(d0.numpy(), t0.detach().numpy()))
+            t0.backward(torch.tensor(delta.copy(), requires_grad=True))
+            d0.backward(dpln.Tensor(delta.copy(), requires_grad=True))
+            self.assertTrue(np_feq(d2.grad.numpy(), t2.grad.detach().numpy()))
+            self.assertTrue(np_feq(d1.grad.numpy(), t1.grad.detach().numpy()))
 
         for _ in range(1000):
-            a1 = np.random.rand(5, 3)
-            a2 = np.random.rand(5, 3)
+            a1 = np.random.rand(1, 3, 4)
+            a2 = np.random.rand(2, 3, 4)
+            a3 = np.random.rand(3, 3, 4)
+            a4 = np.random.rand(4, 3, 4)
+            a5 = np.random.rand(2, 3, 4)
+            delta = np.random.rand(12, 3, 4)
             t1 = torch.tensor(a1.copy(), requires_grad=True)
             t2 = torch.tensor(a2.copy(), requires_grad=True)
+            t3 = torch.tensor(a3.copy(), requires_grad=True)
+            t4 = torch.tensor(a4.copy(), requires_grad=True)
+            t5 = torch.tensor(a5.copy(), requires_grad=True)
             d1 = dpln.Tensor(a1.copy(), requires_grad=True)
             d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-
-            axis = np.random.randint(a1.ndim - 1)
-            t_cat = torch.cat((t1, t2, t1), axis)
-            d_cat = dpln.concat((d1, d2, d1), axis)
-            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
-
-            t_cat.backward(torch.ones_like(t_cat))
-            d_cat.backward(dpln.ones_like(d_cat))
-            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
-
-        for _ in range(100):
-            a1 = np.random.rand(5, 3, 4, 10, 2)
-            a2 = np.random.rand(5, 3, 4, 10, 2)
-            t1 = torch.tensor(a1.copy(), requires_grad=True)
-            t2 = torch.tensor(a2.copy(), requires_grad=True)
-            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
-            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-
-            axis = np.random.randint(a1.ndim - 1)
-            t_cat = torch.cat((t1, t2, t1), axis)
-            d_cat = dpln.concat((d1, d2, d1), axis)
-            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
-
-            t_cat.backward(torch.ones_like(t_cat))
-            d_cat.backward(dpln.ones_like(d_cat))
-            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
-
-        for _ in range(100):
-            a1 = np.random.rand(5, 3, 4, 1, 2)
-            a2 = np.random.rand(5, 3, 4, 10, 2)
-            t1 = torch.tensor(a1.copy(), requires_grad=True)
-            t2 = torch.tensor(a2.copy(), requires_grad=True)
-            d1 = dpln.Tensor(a1.copy(), requires_grad=True)
-            d2 = dpln.Tensor(a2.copy(), requires_grad=True)
-
-            axis = 3
-            t_cat = torch.cat((t1, t2, t1), axis)
-            d_cat = dpln.concat((d1, d2, d1), axis)
-            self.assertTrue(np_feq(t_cat.detach().numpy(), d_cat.numpy()))
-
-            t_cat.backward(torch.ones_like(t_cat))
-            d_cat.backward(dpln.ones_like(d_cat))
-            self.assertTrue((d1.numpy() == t1.detach().numpy()).all())
-            self.assertTrue((d2.numpy() == t2.detach().numpy()).all())
+            d3 = dpln.Tensor(a3.copy(), requires_grad=True)
+            d4 = dpln.Tensor(a4.copy(), requires_grad=True)
+            d5 = dpln.Tensor(a5.copy(), requires_grad=True)
+            t0 = torch.cat((t1, t2, t3, t4, t5), 0)
+            d0 = dpln.concat((d1, d2, d3, d4, d5), 0)
+            self.assertTrue(np_feq(d0.numpy(), t0.detach().numpy()))
+            t0.backward(torch.tensor(delta.copy()))
+            d0.backward(dpln.Tensor(delta.copy()))
+            self.assertTrue(np_feq(d1.grad.numpy(), t1.grad.detach().numpy()))
+            self.assertTrue(np_feq(d2.grad.numpy(), t2.grad.detach().numpy()))
+            self.assertTrue(np_feq(d3.grad.numpy(), t3.grad.detach().numpy()))
+            self.assertTrue(np_feq(d4.grad.numpy(), t4.grad.detach().numpy()))
+            self.assertTrue(np_feq(d5.grad.numpy(), t5.grad.detach().numpy()))
 
 
 class TestFunction(unittest.TestCase):

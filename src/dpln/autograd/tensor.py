@@ -11,13 +11,15 @@ from typing import (
     Sequence,
     Callable,
     Optional,
-    NamedTuple
+    NamedTuple,
+    Dict,
 )
 
 
 class Dependency(NamedTuple):
     tensor: Tensor
-    grad_fn: Callable[[np.ndarray], np.ndarray]
+    grad_fn: Union[Callable[[np.ndarray, Optional[Dict]], np.ndarray], Callable[[np.ndarray], np.ndarray]]
+    meta: Dict = None
 
 
 Arrayable = Union[float, list, np.ndarray]
@@ -78,7 +80,7 @@ class Tensor:
         self.grad.data += grad.data
 
         for dependency in self.dependencies:
-            backward_grad = dependency.grad_fn(grad.data)
+            backward_grad = dependency.grad_fn(grad.data) if dependency.meta is None else dependency.grad_fn(grad.data, dependency.meta)
             dependency.tensor.backward(Tensor(backward_grad))
 
     def dim(self) -> int:
@@ -231,32 +233,26 @@ def _slice(t: Tensor, idxs) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def concat2(t1: Tensor, t2: Tensor, axis: int = 0) -> Tensor:
-    data = np.concatenate((t1.data, t2.data), axis=axis)
-    requires_grad = t1.requires_grad or t2.requires_grad
+def concat(tensors: Sequence[Tensor], axis: int = 0) -> Tensor:
+    assert len(tensors) > 0
+    dim = tensors[0].dim()
+    data = np.concatenate([t.data for t in tensors], axis=axis)
+    requires_grad = True in [t.requires_grad for t in tensors]
     dependencies: List[Dependency] = []
 
-    if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
-            return np.ones_like(t1.data)
+    a = 0
+    b = 0
+    for i, t in enumerate(tensors):
+        b += tensors[i].shape[axis]
+        if t.requires_grad:
+            def grad_fn(grad: np.ndarray, meta=None) -> np.ndarray:
+                idx = tuple([np.s_[meta["a"]:meta["b"]] if j == axis else np.s_[:] for j in range(dim)])
+                return grad[idx]
 
-        dependencies.append(Dependency(t1, grad_fn1))
-
-    if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
-            return np.ones_like(t2.data)
-
-        dependencies.append(Dependency(t2, grad_fn2))
+            dependencies.append(Dependency(t, grad_fn, meta={"a": a, "b": b}))
+        a += tensors[i].shape[axis]
 
     return Tensor(data, requires_grad, dependencies)
-
-
-def concat(t: Sequence[Tensor], axis: int = 0) -> Tensor:
-    out = t[0]
-    for i in range(1, len(t)):
-        out = concat2(out, t[i], axis)
-
-    return out
 
 
 def sum(t: Tensor) -> Tensor:
