@@ -415,6 +415,56 @@ class TestTensor(unittest.TestCase):
             self.assertTrue(np_feq(d4.grad.numpy(), t4.grad.detach().numpy()))
             self.assertTrue(np_feq(d5.grad.numpy(), t5.grad.detach().numpy()))
 
+    def test_reshape(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5)
+            z = np.random.rand(6, 2, 5)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = a0.reshape((6, 2, 5))
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch.reshape(a1, [6, 2, 5])
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b0.backward(dpln.Tensor(z))
+            b1.backward(torch.tensor(z))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8, 9, 10)
+            z = np.random.rand(3 * 4 * 5 * 6 * 7 * 8 * 9 * 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = a0.reshape((3 * 4 * 5 * 6 * 7 * 8 * 9 * 10))
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch.reshape(a1, [3 * 4 * 5 * 6 * 7 * 8 * 9 * 10])
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b0.backward(dpln.Tensor(z))
+            b1.backward(torch.tensor(z))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_flatten(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5)
+            z = np.random.rand(3 * 4 * 5)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln.flatten(a0)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch.flatten(a1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b0.backward(dpln.Tensor(z))
+            b1.backward(torch.tensor(z))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8, 9, 10)
+            z = np.random.rand(3 * 4 * 5 * 6 * 7 * 8 * 9 * 10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            b0 = dpln.flatten(a0)
+            a1 = torch.tensor(a, requires_grad=True)
+            b1 = torch.flatten(a1)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
+            b0.backward(dpln.Tensor(z))
+            b1.backward(torch.tensor(z))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
 
 class TestFunction(unittest.TestCase):
     def test_log(self):

@@ -16,6 +16,10 @@ def linear(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
     return output
 
 
+def conv2d():
+    pass
+
+
 def relu(x: Tensor) -> Tensor:
     return F.relu(x)
 

@@ -103,6 +103,12 @@ class Tensor:
     def permute(self, axes: Union[List, Tuple]) -> Tensor:
         return permute(self, axes)
 
+    def reshape(self, shape):
+        return reshape(self, shape)
+
+    def flatten(self):
+        return flatten(self)
+
     @property
     def T(self) -> Tensor:
         return permute(self, list(range(len(self.shape) - 1, -1, -1)))
@@ -227,6 +233,34 @@ def _slice(t: Tensor, idxs) -> Tensor:
             bigger_grad = np.zeros_like(data)
             bigger_grad[idxs] = grad
             return bigger_grad
+
+        dependencies.append(Dependency(t, grad_fn))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def reshape(t: Tensor, shape) -> Tensor:
+    data = t.data.reshape(shape)
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t.requires_grad:
+        def grad_fn(grad: np.ndarray) -> np.ndarray:
+            return grad.reshape(t.shape)
+
+        dependencies.append(Dependency(t, grad_fn))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def flatten(t: Tensor) -> Tensor:
+    data = t.data.flatten()
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t.requires_grad:
+        def grad_fn(grad: np.ndarray) -> np.ndarray:
+            return grad.reshape(t.shape)
 
         dependencies.append(Dependency(t, grad_fn))
 
@@ -488,7 +522,12 @@ def power(x: Tensor, e: Tensor) -> Tensor:
 
 def dot(t1: Tensor, t2: Tensor) -> Tensor:
     # TODO: impl, test
-    pass
+    assert t1.dim() <= 1 and t2.dim() <= 1
+    data = np.dot(t1.data, t2.data)
+    requires_grad = t1.requires_grad or t2.requires_grad
+    dependencies: List[Dependency] = []
+
+    return Tensor(data, requires_grad, dependencies)
 
 
 def transpose(a: Tensor, dim1: int, dim2: int) -> Tensor:
