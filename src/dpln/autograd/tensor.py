@@ -103,8 +103,8 @@ class Tensor:
     def permute(self, axes: Union[List, Tuple]) -> Tensor:
         return permute(self, axes)
 
-    def reshape(self, shape):
-        return reshape(self, shape)
+    def reshape(self, *sp):
+        return reshape(self, sp)
 
     def flatten(self):
         return flatten(self)
