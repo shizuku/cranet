@@ -10,7 +10,7 @@ from typing import (
 
 def linear(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tensor:
     r"""
-    Applies a linear transformation to the incoming datasets: :math:`y = Ax + b`.
+    Applies a linear transformation to the incoming datasets: :math:`y = xW + b`.
     """
     output = x @ weight
     if bias is not None:
