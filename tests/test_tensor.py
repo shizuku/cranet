@@ -37,10 +37,23 @@ class TestTensor(unittest.TestCase):
             a0 = dpln.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
             b0 = a0.sum()
-            b1 = torch.sum(a1)
+            b1 = a1.sum()
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
             b0.backward(dpln.ones_like(b0))
             b1.backward(torch.ones_like(b1))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            axis = 1
+            b0 = a0.sum(axis)
+            b1 = a1.sum(axis)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
+            b1.backward(torch.ones_like(b1))
+            b0.backward(dpln.ones_like(b0))
+
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
     def test_add(self):

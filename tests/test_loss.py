@@ -46,5 +46,5 @@ class TestFunction(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
-    def cross_entropy(self):
+    def test_cross_entropy(self):
         pass
