@@ -5,6 +5,20 @@ from .tensor import Tensor, Dependency
 import numpy as np
 
 
+def abs(x: Tensor) -> Tensor:
+    data = np.absolute(x.data)
+    requires_grad = x.requires_grad
+    dependencies = []
+
+    if x.requires_grad:
+        def grad_fn(grad: np.ndarray) -> np.ndarray:
+            return grad * np.where(x.data > 0, 1, -1)
+
+        dependencies.append(Dependency(x, grad_fn))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
 def log(x: Tensor) -> Tensor:
     data = np.log(x.data)
     requires_grad = x.requires_grad
@@ -40,7 +54,7 @@ def relu(x: Tensor) -> Tensor:
 
     if requires_grad:
         def grad_fn(grad: np.ndarray) -> np.ndarray:
-            return grad * (np.where(x.data.any() > 0, 1, 0))
+            return grad * np.where(x.data > 0, 1, 0)
 
         dependencies.append(Dependency(x, grad_fn))
 
