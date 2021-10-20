@@ -8,7 +8,6 @@ from .. import init
 from typing import (
     Optional,
 )
-import math
 
 
 class Linear(Module):
