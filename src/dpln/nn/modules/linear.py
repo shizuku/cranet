@@ -5,12 +5,17 @@ from .. import functional as F
 from ..parameter import Parameter
 from .. import init
 
+import numpy as np
+
 from typing import (
     Optional,
 )
 
 
 class Linear(Module):
+    r"""
+    Applies a linear transformation to the incoming datasets: :math:`y = xW + b`.
+    """
     __constants__ = ['in_features', 'out_features']
     in_features: int
     out_features: int
@@ -26,10 +31,11 @@ class Linear(Module):
 
     def reset_parameters(self) -> None:
         """init(reset) parameters"""
-        weight_data = init.uniform_([self.in_features, self.out_features], -.1, .1)
+        k = np.sqrt(1 / self.in_features)
+        weight_data = init.uniform_([self.in_features, self.out_features], -k, k)
         self.weight = Parameter(weight_data)
         if self.use_bias:
-            bias_data = init.uniform_([self.out_features], -.1, .1)
+            bias_data = init.uniform_([self.out_features], -k, k)
             self.bias = Parameter(bias_data)
         else:
             self.bias = None
@@ -38,4 +44,4 @@ class Linear(Module):
         return F.linear(x, self.weight, self.bias)
 
     def __repr__(self) -> str:
-        return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"
+        return f"linear in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"
