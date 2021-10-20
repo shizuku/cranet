@@ -22,6 +22,7 @@ class Dependency(NamedTuple):
     meta: Dict = None
 
 
+Shapable = Union[Tuple, List, int]
 Arrayable = Union[float, list, np.ndarray]
 Tensorable = Union['Tensor', float, np.ndarray]
 
@@ -91,8 +92,8 @@ class Tensor:
         """the product of the self.datasets’s dimensions."""
         return self._data.size
 
-    def sum(self) -> Tensor:
-        return sum(self)
+    def sum(self, axis: Optional[Shapable] = None) -> Tensor:
+        return sum(self, axis)
 
     def mean(self) -> Tensor:
         return mean(self)
@@ -289,12 +290,12 @@ def concat(tensors: Sequence[Tensor], axis: int = 0) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def sum(t: Tensor) -> Tensor:
+def sum(t: Tensor, axis: Optional[Shapable] = None) -> Tensor:
     # TODO: test, support axis param
     """
     Takes a tensor and return the sum of its components
     """
-    data = t.data.sum()
+    data = t.data.sum(axis=axis)
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
 
