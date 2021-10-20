@@ -85,8 +85,8 @@ class Module:
     def forward(self, *args, **kwargs) -> Tensor:
         raise NotImplementedError
 
-    def __call__(self, x: Tensor) -> Tensor:
-        return self.forward(x)
+    def __call__(self, *args, **kwargs) -> Tensor:
+        return self.forward(*args, **kwargs)
 
     def __setstate__(self, state):
         self.__dict__.update(state)
