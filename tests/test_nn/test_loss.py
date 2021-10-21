@@ -1,3 +1,5 @@
+import os
+import sys
 import unittest
 
 import numpy as np
@@ -8,13 +10,11 @@ from src.dpln.nn import functional as dpln_F
 
 from src import dpln
 
-
-def np_feq(a: np.ndarray, b: np.ndarray, epsilon: float = 2e-15) -> bool:
-    return (np.abs(a - b) < epsilon).all()
+from ..utils import np_feq
 
 
-class TestFunction(unittest.TestCase):
-    def test_mse(self):
+class TestMse(unittest.TestCase):
+    def test_mse_0(self):
         for _ in range(100):
             a = np.random.rand(10)
             b = np.random.rand(10)
@@ -31,6 +31,7 @@ class TestFunction(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
+    def test_mse_1(self):
         for _ in range(100):
             a = np.random.rand(13, 10)
             b = np.random.rand(13, 10)
@@ -46,5 +47,12 @@ class TestFunction(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
+
+class TestCrossEntropy(unittest.TestCase):
     def test_cross_entropy(self):
         pass
+
+
+if __name__ == '__main__':
+    sys.path.append(os.getcwd())
+    unittest.main()
