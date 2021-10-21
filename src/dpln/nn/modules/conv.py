@@ -5,6 +5,7 @@ from .. import functional as F
 from ..parameter import Parameter
 from .. import init
 
+import math
 from typing import (
     Optional,
     Tuple,
@@ -86,10 +87,11 @@ class Conv2d(Module):
 
     def reset_parameters(self, use_bias: bool = True) -> None:
         """init(reset) parameters"""
-        weight_data = init.uniform_([self.out_channels, self.in_channels, self.kernel_size[0], self.kernel_size[1]], -.1, .1)
+        sqrt_k = math.sqrt(self.groups / (self.in_channels * self.kernel_size[0] * self.kernel_size[1]))
+        weight_data = init.uniform_([self.out_channels, self.in_channels / self.groups, self.kernel_size[0], self.kernel_size[1]], -sqrt_k, sqrt_k)
         self.weight = Parameter(weight_data)
         if use_bias:
-            bias_data = init.uniform_([self.out_channels], -.1, .1)
+            bias_data = init.uniform_([self.out_channels], -sqrt_k, sqrt_k)
             self.bias = Parameter(bias_data)
         else:
             self.bias = None
