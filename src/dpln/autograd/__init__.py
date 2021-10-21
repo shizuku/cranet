@@ -10,5 +10,5 @@ from .tensor import (
     zeros, zeros_like, ones, ones_like,
     add, sub, neg, mul, truediv, matmul, power, dot,
     sum, mean,
-    transpose, permute, concat, reshape, flatten,
+    transpose, permute, concat, reshape, flatten, pad
 )

@@ -7,6 +7,9 @@ from .activation import (
 from .container import (
     Sequential
 )
+from .conv import (
+    Conv2d
+)
 from .linear import (
     Linear
 )

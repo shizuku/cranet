@@ -11,10 +11,10 @@ def abs(x: Tensor) -> Tensor:
     dependencies = []
 
     if x.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * np.where(x.data > 0, 1, -1)
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "abs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -25,10 +25,10 @@ def log(x: Tensor) -> Tensor:
     dependencies = []
 
     if x.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * (1 / x.data)
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "log"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -39,10 +39,10 @@ def exp(x: Tensor) -> Tensor:
     dependencies = []
 
     if x.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * data
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "exp"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -53,10 +53,10 @@ def relu(x: Tensor) -> Tensor:
     dependencies = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * np.where(x.data > 0, 1, 0)
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "relu"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -67,10 +67,10 @@ def sigmoid(x: Tensor) -> Tensor:
     dependencies = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * data * (1 - data)
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "sigmoid"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -82,7 +82,7 @@ def softmax(x: Tensor, axis=-1) -> Tensor:
     dependencies = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             s = data[:, :, np.newaxis]  # (bs, n, 1)
             a = np.array([np.diagflat(s[i, :, :]) for i in range(s.shape[0])])  # (bs, n, n)
             b = np.matmul(s, s.transpose((0, 2, 1)))  # (bs, n, n)
@@ -90,7 +90,7 @@ def softmax(x: Tensor, axis=-1) -> Tensor:
             d = np.matmul(c, (a - b))
             return d.squeeze()
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "softmax"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -101,9 +101,9 @@ def tanh(x: Tensor) -> Tensor:
     dependencies = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * (1 - data * data)
 
-        dependencies.append(Dependency(x, grad_fn))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "tanh"}))
 
     return Tensor(data, requires_grad, dependencies)

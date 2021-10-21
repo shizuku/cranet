@@ -18,7 +18,7 @@ from typing import (
 
 class Dependency(NamedTuple):
     tensor: Tensor
-    grad_fn: Union[Callable[[np.ndarray, Optional[Dict]], np.ndarray], Callable[[np.ndarray], np.ndarray]]
+    grad_fn: Callable[[np.ndarray, Optional[Dict]], np.ndarray]
     meta: Dict = None
 
 
@@ -81,7 +81,7 @@ class Tensor:
         self.grad.data += grad.data
 
         for dependency in self.dependencies:
-            backward_grad = dependency.grad_fn(grad.data) if dependency.meta is None else dependency.grad_fn(grad.data, dependency.meta)
+            backward_grad = dependency.grad_fn(grad.data, dependency.meta)
             dependency.tensor.backward(Tensor(backward_grad))
 
     def dim(self) -> int:
@@ -224,18 +224,33 @@ def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:
 
 
 def _slice(t: Tensor, idxs) -> Tensor:
-    # TODO: test
     data = t.data[idxs]
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
-            bigger_grad = np.zeros_like(data)
-            bigger_grad[idxs] = grad
-            return bigger_grad
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            ret = np.zeros_like(t.data)
+            ret[idxs] = grad
+            assert ret.shape == t.shape
+            return ret
 
-        dependencies.append(Dependency(t, grad_fn))
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "slice"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def pad(t: Tensor, pad_width, mode='constant', **kwargs) -> Tensor:
+    data = np.pad(t.data, pad_width, mode, **kwargs)
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if t.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            idx = tuple([np.s_[pad_width[i][0]:grad.shape[i] - pad_width[i][1]] for i in range(grad.ndim)])
+            return grad[idx]
+
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "pad"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -246,10 +261,10 @@ def reshape(t: Tensor, shape) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad.reshape(t.shape)
 
-        dependencies.append(Dependency(t, grad_fn))
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "reshape"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -260,10 +275,10 @@ def flatten(t: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad.reshape(t.shape)
 
-        dependencies.append(Dependency(t, grad_fn))
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "flatten"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -280,11 +295,11 @@ def concat(tensors: Sequence[Tensor], axis: int = 0) -> Tensor:
     for i, t in enumerate(tensors):
         b += tensors[i].shape[axis]
         if t.requires_grad:
-            def grad_fn(grad: np.ndarray, meta=None) -> np.ndarray:
+            def grad_fn(grad: np.ndarray, meta) -> np.ndarray:
                 idx = tuple([np.s_[meta["a"]:meta["b"]] if j == axis else np.s_[:] for j in range(dim)])
                 return grad[idx]
 
-            dependencies.append(Dependency(t, grad_fn, meta={"a": a, "b": b}))
+            dependencies.append(Dependency(t, grad_fn, meta={"name": "concat", "id": i, "a": a, "b": b}))
         a += tensors[i].shape[axis]
 
     return Tensor(data, requires_grad, dependencies)
@@ -300,10 +315,10 @@ def sum(t: Tensor, axis: Optional[Shapable] = None) -> Tensor:
     dependencies: List[Dependency] = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return grad * np.ones_like(t.data)
 
-        dependencies.append(Dependency(t, grad_fn))
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "sum"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -319,7 +334,7 @@ def add(t1: Tensor, t2: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -328,10 +343,10 @@ def add(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t1, grad_fn1))
+        dependencies.append(Dependency(t1, grad_fn1, meta={"name": "add_lhs"}))
 
     if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -340,7 +355,7 @@ def add(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t2, grad_fn2))
+        dependencies.append(Dependency(t2, grad_fn2, meta={"name": "add_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -351,7 +366,7 @@ def sub(t1: Tensor, t2: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -360,10 +375,10 @@ def sub(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t1, grad_fn1))
+        dependencies.append(Dependency(t1, grad_fn1, meta={"name": "sub_lhs"}))
 
     if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
                 grad = grad.sum(axis=0)
@@ -372,7 +387,7 @@ def sub(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return -grad
 
-        dependencies.append(Dependency(t2, grad_fn2))
+        dependencies.append(Dependency(t2, grad_fn2, meta={"name": "sub_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -383,7 +398,7 @@ def neg(t: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if requires_grad:
-        dependencies.append(Dependency(t, lambda x: -x))
+        dependencies.append(Dependency(t, lambda x, _: -x, meta={"name": "neg"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -394,7 +409,7 @@ def mul(t1: Tensor, t2: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
             grad = grad * t2.data
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
@@ -404,10 +419,10 @@ def mul(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t1, grad_fn1))
+        dependencies.append(Dependency(t1, grad_fn1, meta={"name": "mul_lhs"}))
 
     if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
             grad = grad * t1.data
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
@@ -417,7 +432,7 @@ def mul(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t2, grad_fn2))
+        dependencies.append(Dependency(t2, grad_fn2, meta={"name": "mul_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -429,7 +444,7 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
             grad = np.divide(grad, t2.data)
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
@@ -439,10 +454,10 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t1, grad_fn1))
+        dependencies.append(Dependency(t1, grad_fn1, meta={"name": "truediv_lhs"}))
 
     if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
             grad = - (grad / t2.data) * (t1.data / t2.data)
             # grad = np.negative(np.divide(np.multiply(grad, t1.datasets), t2.datasets * t2.datasets))
             # grad = np.negative(np.divide(np.multiply(grad, t1.datasets), np.power(t2.datasets, 2)))
@@ -454,7 +469,7 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(t2, grad_fn2))
+        dependencies.append(Dependency(t2, grad_fn2, meta={"name": "truediv_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -472,16 +487,30 @@ def matmul(t1: Tensor, t2: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if t1.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
-            return grad @ np.swapaxes(t2.data, -1, -2)
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
+            grad = grad @ np.swapaxes(t2.data, -1, -2)
+            ndims_added = grad.ndim - t1.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t1.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
 
-        dependencies.append(Dependency(t1, grad_fn1))
+        dependencies.append(Dependency(t1, grad_fn1, meta={"name": "matmul_lhs"}))
 
     if t2.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
-            return np.swapaxes(t1.data, -1, -2) @ grad
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
+            grad = np.swapaxes(t1.data, -1, -2) @ grad
+            ndims_added = grad.ndim - t2.data.ndim
+            for _ in range(ndims_added):
+                grad = grad.sum(axis=0)
+            for i, dim in enumerate(t2.shape):
+                if dim == 1:
+                    grad = grad.sum(axis=i, keepdims=True)
+            return grad
 
-        dependencies.append(Dependency(t2, grad_fn2))
+        dependencies.append(Dependency(t2, grad_fn2, meta={"name": "matmul_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -493,7 +522,7 @@ def power(x: Tensor, e: Tensor) -> Tensor:
     dependencies: List[Dependency] = []
 
     if x.requires_grad:
-        def grad_fn1(grad: np.ndarray) -> np.ndarray:
+        def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
             grad = grad * e.data * np.power(x.data, e.data - 1)
             ndims_added = grad.ndim - x.data.ndim
             for _ in range(ndims_added):
@@ -503,10 +532,10 @@ def power(x: Tensor, e: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(x, grad_fn1))
+        dependencies.append(Dependency(x, grad_fn1, meta={"name": "power_lhs"}))
 
     if e.requires_grad:
-        def grad_fn2(grad: np.ndarray) -> np.ndarray:
+        def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
             grad = grad * data * np.log(x.data)
             ndims_added = grad.ndim - e.data.ndim
             for _ in range(ndims_added):
@@ -516,7 +545,7 @@ def power(x: Tensor, e: Tensor) -> Tensor:
                     grad = grad.sum(axis=i, keepdims=True)
             return grad
 
-        dependencies.append(Dependency(e, grad_fn2))
+        dependencies.append(Dependency(e, grad_fn2, meta={"name": "power_rhs"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -537,10 +566,10 @@ def transpose(a: Tensor, dim1: int, dim2: int) -> Tensor:
     dependencies: List[Dependency] = []
 
     if a.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             return np.swapaxes(grad, dim2, dim1)
 
-        dependencies.append(Dependency(a, grad_fn))
+        dependencies.append(Dependency(a, grad_fn, meta={"name": "transpose"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -551,10 +580,10 @@ def permute(a: Tensor, axes: Union[List, Tuple]) -> Tensor:
     dependencies: List[Dependency] = []
 
     if a.requires_grad:
-        def grad_fn(grad: np.ndarray) -> np.ndarray:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             axes_t = invert_permutation(axes)
             return grad.transpose(axes_t)
 
-        dependencies.append(Dependency(a, grad_fn))
+        dependencies.append(Dependency(a, grad_fn, meta={"name": "permute"}))
 
     return Tensor(data, requires_grad, dependencies)
