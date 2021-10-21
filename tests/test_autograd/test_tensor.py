@@ -4,23 +4,17 @@ import sys
 import unittest
 
 import numpy as np
-import torch
 
+import torch
 from torch.nn import functional as torch_F
-from src.dpln.nn import functional as dpln_F
 
 from src import dpln
 
-
-def np_feq(a: np.ndarray, b: np.ndarray, epsilon: float = 2e-15) -> bool:
-    return (np.abs(a - b) < epsilon).all()
+from ..utils import np_feq
 
 
-class TestTensorL1(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_sum(self):
+class TestTensorSum(unittest.TestCase):
+    def test_sum_0(self):
         for _ in range(100):
             a = np.random.rand(100)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -32,6 +26,7 @@ class TestTensorL1(unittest.TestCase):
             b1.backward(torch.ones_like(b1))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
+    def test_sum_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -43,6 +38,7 @@ class TestTensorL1(unittest.TestCase):
             b1.backward(torch.ones_like(b1))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
+    def test_sum_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -56,7 +52,9 @@ class TestTensorL1(unittest.TestCase):
 
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
-    def test_add(self):
+
+class TestTensorAdd(unittest.TestCase):
+    def test_add_0(self):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
@@ -72,6 +70,7 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
+    def test_add_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(3, 4, 5, 6)
@@ -87,7 +86,9 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
-    def test_sub(self):
+
+class TestTensorSub(unittest.TestCase):
+    def test_sub_0(self):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
@@ -103,6 +104,7 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
             self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
 
+    def test_sub_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(3, 4, 5, 6)
@@ -118,9 +120,12 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
             self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
 
+
+class TestTensorNeg(unittest.TestCase):
     def test_neg(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5)
+
             a0 = dpln.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
             b0 = -a0
@@ -130,7 +135,9 @@ class TestTensorL1(unittest.TestCase):
             b1.backward(torch.ones_like(b1))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
-    def test_mul(self):
+
+class TestTensorMul(unittest.TestCase):
+    def test_mul_0(self):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
@@ -146,6 +153,7 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
             self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
 
+    def test_mul_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(3, 4, 5, 6)
@@ -161,6 +169,7 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
             self.assertTrue((b0.grad.numpy() == b1.grad.detach().numpy()).all())
 
+    def test_mul_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(1)
@@ -176,7 +185,9 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-10))
 
-    def test_truediv(self):
+
+class TestTensorTruediv(unittest.TestCase):
+    def test_truediv_0(self):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
@@ -192,6 +203,7 @@ class TestTensorL1(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-10))
 
+    def test_truediv_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(3, 4, 5, 6)
@@ -304,7 +316,7 @@ class TestTensorMatmul(unittest.TestCase):
 
 
 class TestTensorPower(unittest.TestCase):
-    def test_power(self):
+    def test_power_0(self):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
@@ -320,6 +332,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
+    def test_power_1(self):
         for _ in range(10000):
             a = np.random.rand(3, 4, 5, 6)
             b = np.random.rand(3, 4, 5, 6)
@@ -335,6 +348,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
+    def test_power_2(self):
         for _ in range(10000):
             a = np.random.rand(3, 4, 5, 6, 7, 8)
             b = np.random.rand(1)
@@ -350,7 +364,9 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-11))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-11))
 
-    def test_transpose(self):
+
+class TestTensorTranspose(unittest.TestCase):
+    def test_transpose_0(self):
         for _ in range(100):
             a = np.random.rand(8)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -362,6 +378,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue((b0.numpy() == b1.detach().numpy()).all())
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_transpose_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -373,6 +390,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue((b0.numpy() == b1.detach().numpy()).all())
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_transpose_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -384,6 +402,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue((b0.numpy() == b1.detach().numpy()).all())
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_transpose_3(self):
         for _ in range(100):
             a = np.random.rand(7, 9, 2, 4, 8, 3)
             a0 = dpln.Tensor(a, requires_grad=True)
@@ -395,7 +414,9 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue((b0.numpy() == b1.detach().numpy()).all())
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
-    def test_permute(self):
+
+class TestTensorPermute(unittest.TestCase):
+    def test_permute_0(self):
         for _ in range(10):
             a = np.random.rand(16)
             axes = list(range(1))
@@ -409,6 +430,7 @@ class TestTensorPower(unittest.TestCase):
             b1.backward(torch.ones_like(b1))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_permute_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4)
             axes = list(range(2))
@@ -422,6 +444,7 @@ class TestTensorPower(unittest.TestCase):
             b1.backward(torch.ones_like(b1))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_permute_2(self):
         for _ in range(100):
             a = np.random.rand(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
             axes = list(range(10))
@@ -435,6 +458,7 @@ class TestTensorPower(unittest.TestCase):
             b0.backward(dpln.ones_like(b0))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
+    def test_permute_3(self):
         for _ in range(100):
             a = np.random.rand(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
             axes = list(range(10))
@@ -448,7 +472,9 @@ class TestTensorPower(unittest.TestCase):
             b0.backward(dpln.ones_like(b0))
             self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
 
-    def test_concat(self):
+
+class TestTensorConcat(unittest.TestCase):
+    def test_concat_0(self):
         for _ in range(1000):
             a1 = np.random.rand(1, 3, 4)
             a2 = np.random.rand(1, 3, 4)
@@ -465,6 +491,7 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue(np_feq(d2.grad.numpy(), t2.grad.detach().numpy()))
             self.assertTrue(np_feq(d1.grad.numpy(), t1.grad.detach().numpy()))
 
+    def test_concat_1(self):
         for _ in range(1000):
             a1 = np.random.rand(1, 3, 4)
             a2 = np.random.rand(2, 3, 4)
@@ -493,7 +520,9 @@ class TestTensorPower(unittest.TestCase):
             self.assertTrue(np_feq(d4.grad.numpy(), t4.grad.detach().numpy()))
             self.assertTrue(np_feq(d5.grad.numpy(), t5.grad.detach().numpy()))
 
-    def test_reshape(self):
+
+class TestTensorReshape(unittest.TestCase):
+    def test_reshape_0(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5)
             z = np.random.rand(6, 2, 5)
@@ -507,6 +536,7 @@ class TestTensorPower(unittest.TestCase):
             b1.backward(torch.tensor(z))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
+    def test_reshape_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6, 7, 8, 9, 10)
             z = np.random.rand(3 * 4 * 5 * 6 * 7 * 8 * 9 * 10)
@@ -520,7 +550,9 @@ class TestTensorPower(unittest.TestCase):
             b1.backward(torch.tensor(z))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
-    def test_flatten(self):
+
+class TestTensorFlatten(unittest.TestCase):
+    def test_flatten_0(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5)
             z = np.random.rand(3 * 4 * 5)
@@ -533,6 +565,7 @@ class TestTensorPower(unittest.TestCase):
             b1.backward(torch.tensor(z))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
+    def test_flatten_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6, 7, 8, 9, 10)
             z = np.random.rand(3 * 4 * 5 * 6 * 7 * 8 * 9 * 10)
@@ -587,113 +620,6 @@ class TestTensorPad(unittest.TestCase):
             b0.backward(dpln.Tensor(z))
             b1.backward(torch.tensor(z))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-
-class TestFunction(unittest.TestCase):
-    def test_log(self):
-        for _ in range(100):
-            a = np.random.rand(3)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln.log(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch.log(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()), f"{b0},{b1}")
-            b0.backward(dpln.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
-
-        for _ in range(100):
-            a = np.random.rand(3, 4, 5)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln.log(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch.log(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()), f"{b0},{b1}")
-            b0.backward(dpln.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
-
-    def test_exp(self):
-        for _ in range(100):
-            a = np.random.rand(8)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln.exp(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch.exp(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b0.backward(dpln.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-        for _ in range(100):
-            a = np.random.rand(3, 4, 5)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln.exp(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch.exp(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b0.backward(dpln.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-    def test_relu(self):
-        for _ in range(100):
-            a = np.random.rand(13, 10)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln_F.relu(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch_F.relu(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(dpln.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-    def test_sigmoid(self):
-        for _ in range(100):
-            a = np.random.rand(13, 10)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln_F.sigmoid(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch_F.sigmoid(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(dpln.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-    def test_softmax(self):
-        for _ in range(100):
-            a = np.random.rand(13, 10)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln_F.softmax(a0, axis=-1)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch_F.softmax(a1, dim=-1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(dpln.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-    def test_tanh(self):
-        for _ in range(100):
-            a = np.random.rand(13, 10)
-            a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln_F.tanh(a0)
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch_F.tanh(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(dpln.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-
-    def test_flatten(self):
-        for _ in range(1):
-            a = np.random.rand(2, 2, 2)
-            t = torch.tensor(a, requires_grad=True)
-            z = torch.flatten(t)
-            z.backward(torch.ones_like(z))
-            print()
-            print(t.grad)
-            print(t.grad.size())
-            print(z.size())
 
 
 if __name__ == '__main__':

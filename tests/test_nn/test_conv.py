@@ -1,3 +1,5 @@
+import os
+import sys
 import unittest
 
 import numpy as np
@@ -8,9 +10,7 @@ from src.dpln.nn import functional as dpln_F
 
 from src import dpln
 
-
-def np_feq(a: np.ndarray, b: np.ndarray, epsilon: float = 2e-15) -> bool:
-    return (np.abs(a - b) < epsilon).all()
+from ..utils import np_feq
 
 
 class TestConv2d(unittest.TestCase):
@@ -134,3 +134,8 @@ class TestConv2d(unittest.TestCase):
             self.assertTrue(np_feq(w_t.detach().numpy(), w_d.numpy()))
             self.assertTrue(np_feq(b_t.detach().numpy(), b_d.numpy()))
             self.assertTrue(np_feq(x_t.detach().numpy(), x_d.numpy()))
+
+
+if __name__ == '__main__':
+    sys.path.append(os.getcwd())
+    unittest.main()
