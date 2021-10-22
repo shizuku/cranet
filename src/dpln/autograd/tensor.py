@@ -95,8 +95,8 @@ class Tensor:
     def sum(self, axis: Optional[Shapable] = None) -> Tensor:
         return sum(self, axis)
 
-    def mean(self) -> Tensor:
-        return mean(self)
+    def mean(self, axis: Optional[Shapable] = None) -> Tensor:
+        return mean(self, axis)
 
     def transpose(self, dim1: int, dim2: int) -> Tensor:
         return transpose(self, dim1, dim2)
@@ -306,7 +306,6 @@ def concat(tensors: Sequence[Tensor], axis: int = 0) -> Tensor:
 
 
 def sum(t: Tensor, axis: Optional[Shapable] = None) -> Tensor:
-    # TODO: test, support axis param
     """
     Takes a tensor and return the sum of its components
     """
@@ -315,17 +314,26 @@ def sum(t: Tensor, axis: Optional[Shapable] = None) -> Tensor:
     dependencies: List[Dependency] = []
 
     if requires_grad:
-        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-            return grad * np.ones_like(t.data)
+        if axis is None:
+            def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+                return grad * np.ones_like(t.data)
+        else:
+            def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+                return np.expand_dims(grad, axis=axis) * np.ones_like(t.data)
 
         dependencies.append(Dependency(t, grad_fn, meta={"name": "sum"}))
 
     return Tensor(data, requires_grad, dependencies)
 
 
-def mean(t: Tensor) -> Tensor:
-    # TODO: test, support axis param
-    return t.sum() / t.numel()
+def mean(t: Tensor, axis: Optional[Shapable] = None) -> Tensor:
+    data = t.sum(axis=axis)
+    if axis is None:
+        numel = t.numel()
+    else:
+        total_numel = t.numel()
+        numel = total_numel / data.numel()
+    return data / numel
 
 
 def add(t1: Tensor, t2: Tensor) -> Tensor:
@@ -475,6 +483,7 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
 
 
 def matmul(t1: Tensor, t2: Tensor) -> Tensor:
+    # TODO: fix one dim
     """
     if t1 is (n1, m1) and t2 is (m1, m2), then t1 @ t2 is (n1, m2)
     so grad3 is (n1, m2)

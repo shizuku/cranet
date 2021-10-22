@@ -28,7 +28,7 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
            groups: int = 1,
            padding_mode: str = 'zeros'):
     """
-    TODO: impl dilation, groups
+    TODO: impl groups
 
     :param x: Tensor shape(bs, ch_i, h_i, w_i)
     :param weight: Tensor shape(ch_o, ch_i, h_k, w_k)
@@ -91,7 +91,7 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
     w_o = math.floor((w_i + padding[1][0] + padding[1][1] - dilation[1] * (w_k - 1) - 1) / stride[1] + 1)
 
     pad_inp = padding2d(x, padding, padding_mode)
-    col = im2col2d(pad_inp, weight.shape, stride)
+    col = im2col2d(pad_inp, weight.shape, stride, dilation)
     a = (weight.reshape(ch_o, ch_i * h_k * w_k) @ col.transpose(1, 2)).reshape(bs, ch_o, h_o, w_o)
     if bias is None:
         return a
@@ -144,6 +144,24 @@ def padding2d(x: Tensor, padding: Union[Tuple, List, int], mode: str) -> Tensor:
         raise ValueError("value of `mode` must be 'zeros', 'reflect', 'replicate' or 'circular'")
 
 
+def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
+               stride: Union[Tuple, List, int] = 1,
+               padding: Union[Tuple, List, int] = 0,
+               dilation: Union[Tuple, List, int] = 1, ) -> Tensor:
+    # TODO: impl
+    pass
+
+
+def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
+    return AF.dropout(x, p, training)
+
+
+def flatten(x: Tensor) -> Tensor:
+    return x.flatten()
+
+
+# activation
+
 def relu(x: Tensor) -> Tensor:
     return AF.relu(x)
 
@@ -160,6 +178,7 @@ def tanh(x: Tensor) -> Tensor:
     return AF.tanh(x)
 
 
+# loss
 
 def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
@@ -173,7 +192,6 @@ def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
         return L
     else:
         raise ValueError("reduction must be 'mean', 'sum', or None")
-
 
 
 def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
