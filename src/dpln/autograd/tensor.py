@@ -475,6 +475,7 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
 
 
 def matmul(t1: Tensor, t2: Tensor) -> Tensor:
+    # TODO: fix one dim
     """
     if t1 is (n1, m1) and t2 is (m1, m2), then t1 @ t2 is (n1, m2)
     so grad3 is (n1, m2)

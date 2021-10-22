@@ -47,6 +47,24 @@ def exp(x: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
+def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
+    if training:
+        mask = np.random.rand(*x.shape) > p
+        data = x.data * mask * (1 / (1 - p))
+        requires_grad = x.requires_grad
+        dependencies = []
+
+        if x.requires_grad:
+            def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+                return mask * grad / (1 - p)
+
+            dependencies.append(Dependency(x, grad_fn, meta={"name": "dropout"}))
+
+        return Tensor(data, requires_grad, dependencies)
+    else:
+        return x
+
+
 def relu(x: Tensor) -> Tensor:
     data = np.maximum(x.data, 0)
     requires_grad = x.requires_grad

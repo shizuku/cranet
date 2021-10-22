@@ -144,6 +144,21 @@ def padding2d(x: Tensor, padding: Union[Tuple, List, int], mode: str) -> Tensor:
         raise ValueError("value of `mode` must be 'zeros', 'reflect', 'replicate' or 'circular'")
 
 
+def max_pool2d() -> Tensor:
+    # TODO: impl
+    pass
+
+
+def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
+    return AF.dropout(x, p, training)
+
+
+def flatten(x: Tensor) -> Tensor:
+    return x.flatten()
+
+
+# activation
+
 def relu(x: Tensor) -> Tensor:
     return AF.relu(x)
 
@@ -159,6 +174,8 @@ def softmax(x: Tensor, axis=-1) -> Tensor:
 def tanh(x: Tensor) -> Tensor:
     return AF.tanh(x)
 
+
+# loss
 
 def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
