@@ -20,7 +20,7 @@ class TestTensorSum(unittest.TestCase):
             a0 = dpln.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
             b0 = a0.sum()
-            b1 = torch.sum(a1)
+            b1 = a1.sum()
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13))
             b0.backward(dpln.ones_like(b0))
             b1.backward(torch.ones_like(b1))
@@ -34,21 +34,104 @@ class TestTensorSum(unittest.TestCase):
             b0 = a0.sum()
             b1 = a1.sum()
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
-            b0.backward(dpln.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            # print(np.random.rand().shape)
+            delta = np.random.randn()
+            delta0 = dpln.Tensor(delta, requires_grad=True)
+            delta1 = torch.tensor(delta, requires_grad=True)
+            b0.backward(delta0)
+            b1.backward(delta1)
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-13))
 
     def test_sum_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
             a0 = dpln.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
-            axis = 1
+            axis = np.random.randint(len(a.shape))
             b0 = a0.sum(axis)
             b1 = a1.sum(axis)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"dpln:\n{b0.numpy().shape}\ntorch:{b1.detach().numpy().shape}")
+            delta = np.random.randn(*b0.shape)
+            delta0 = dpln.Tensor(delta, requires_grad=True)
+            delta1 = torch.tensor(delta, requires_grad=True)
+            b0.backward(delta0)
+            b1.backward(delta1)
+
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_sum_3(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            axis = (0, 1, 3)
+            b0 = a0.sum(axis)
+            b1 = a1.sum(axis)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"dpln:\n{b0.numpy().shape}\ntorch:{b1.detach().numpy().shape}")
             b1.backward(torch.ones_like(b1))
             b0.backward(dpln.ones_like(b0))
+
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+
+class TestTensorMean(unittest.TestCase):
+    def test_mean_0(self):
+        for _ in range(100):
+            a = np.random.rand(100)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = a0.mean()
+            b1 = a1.mean()
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ndpln:{b0.numpy()}\ntorch:{b1.detach().numpy()}")
+            b0.backward(dpln.ones_like(b0))
+            b1.backward(torch.ones_like(b1))
+
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_mean_1(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = a0.mean()
+            b1 = a1.mean()
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
+            b0.backward(dpln.ones_like(b0))
+            b1.backward(torch.ones_like(b1))
+
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_mean_2(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 2, 1, 3)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            axis = np.random.randint(len(a.shape))
+            b0 = a0.mean(axis)
+            b1 = a1.mean(axis)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ndpln:\n{b0.numpy()}\ntorch:{b1.detach().numpy()}")
+            delta = np.random.randn(*b0.shape)
+            delta0 = dpln.Tensor(delta, requires_grad=True)
+            delta1 = torch.tensor(delta, requires_grad=True)
+            b0.backward(delta0)
+            b1.backward(delta1)
+
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+
+    def test_mean_3(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            axis = (0, 1, 4)
+            b0 = a0.mean(axis)
+            b1 = a1.mean(axis)
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ndpln:\n{b0.numpy()}\ntorch:{b1.detach().numpy()}")
+            delta = np.random.randn(*b0.shape)
+            delta0 = dpln.Tensor(delta, requires_grad=True)
+            delta1 = torch.tensor(delta, requires_grad=True)
+            b0.backward(delta0)
+            b1.backward(delta1)
 
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 

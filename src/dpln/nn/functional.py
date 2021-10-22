@@ -180,6 +180,20 @@ def tanh(x: Tensor) -> Tensor:
 
 # loss
 
+def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
+    # TODO: test
+    L = AF.abs(x - y)
+
+    if reduction == 'mean':
+        return L.mean()
+    elif reduction == 'sum':
+        return L.sum()
+    elif reduction is None:
+        return L
+    else:
+        raise ValueError("reduction must be 'mean', 'sum', or None")
+
+
 def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
     L = (x - y) ** 2
@@ -196,8 +210,4 @@ def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
 
 def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: str = 'mean') -> Tensor:
     # TODO: test
-    pass
-
-
-def l1_loss(x: Tensor, target: Tensor, reduction: str = 'mean') -> Tensor:
     pass
