@@ -74,7 +74,7 @@ class Tensor:
 
         if grad is None:
             if self.shape == ():
-                grad = Tensor(1)
+                grad = Tensor(1.)
             else:
                 raise RuntimeError(
                     "grad must be specified for non-zero-tensor")

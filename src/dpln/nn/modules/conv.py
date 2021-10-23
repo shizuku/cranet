@@ -97,34 +97,8 @@ class Conv2d(Module):
             self.bias = None
 
     def forward(self, x: Tensor) -> Tensor:
-        padding = self.padding
-        if type(self.padding) == str:
-            padding = str2pad2d(self.padding, x.shape, self.weight.shape, self.stride)
-        return F.conv2d(x, self.weight, self.bias, self.stride, padding,
+        return F.conv2d(x, self.weight, self.bias, self.stride, self.padding,
                         self.dilation, self.groups, self.padding_mode)
 
     def __repr__(self) -> str:
         return f"Conv2d"
-
-
-def str2pad2d(padding: str, inp_shape, kernel_shape: Union[Tuple, List], stride: Tuple[int, int]):
-    _, _, h_i, w_i = inp_shape
-    _, _, h_k, w_k = kernel_shape
-    if padding.lower() == 'same':
-        if h_i % stride[0] == 0:
-            h_p = max(h_k - stride[0], 0)
-        else:
-            h_p = max(h_k - (h_i % stride[0]), 0)
-        if w_i % stride[1] == 0:
-            w_p = max(w_k - stride[1], 0)
-        else:
-            w_p = max(w_k - (w_i % stride[1]), 0)
-        h_pa = h_p // 2
-        h_pb = h_p - h_pa
-        w_pa = w_p // 2
-        w_pb = w_p - w_pa
-        return (h_pa, h_pb), (w_pa, w_pb)
-    elif padding.lower() == 'valid':
-        return (0, 0), (0, 0)
-    else:
-        raise ValueError("padding string must be 'same' or 'valid'")

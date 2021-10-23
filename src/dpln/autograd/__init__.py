@@ -1,5 +1,5 @@
 from .function import (
-    abs, log, exp, relu, sigmoid, softmax, tanh,
+    abs, max, min, log, exp, relu, sigmoid, softmax, tanh,
 )
 from .random import (
     normal, normal_like,

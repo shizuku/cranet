@@ -66,6 +66,116 @@ class TestAbs(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
 
+class TestMax(unittest.TestCase):
+    def test_max_0(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_d = dpln.max(a_d)
+            b_t = torch.max(a_t)
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            b_t.backward()
+            b_d.backward()
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+    def test_max_1(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_d = dpln.max(a_d)
+            b_t = torch.max(a_t)
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand()
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy(), 2e-7))
+
+    def test_max_5(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = np.random.randint(0, 5)
+            b_d = dpln.max(a_d, axis=axis)
+            b_t = torch.max(a_t, dim=axis).values
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand(*b_d.shape)
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+    def test_max_6(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = np.random.randint(0, 5)
+            b_d = dpln.max(a_d, axis=axis, keepdims=True)
+            b_t = torch.max(a_t, dim=axis, keepdim=True).values
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand(*b_d.shape)
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+
+class TestMin(unittest.TestCase):
+    def test_min_0(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_d = dpln.min(a_d)
+            b_t = torch.min(a_t)
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            b_t.backward()
+            b_d.backward()
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+    def test_min_1(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_d = dpln.min(a_d)
+            b_t = torch.min(a_t)
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand()
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy(), 2e-7))
+
+    def test_min_5(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = np.random.randint(0, 5)
+            b_d = dpln.min(a_d, axis=axis)
+            b_t = torch.min(a_t, dim=axis).values
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand(*b_d.shape)
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+    def test_min_6(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = np.random.randint(0, 5)
+            b_d = dpln.min(a_d, axis=axis, keepdims=True)
+            b_t = torch.min(a_t, dim=axis, keepdim=True).values
+            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            g = np.random.rand(*b_d.shape)
+            b_t.backward(torch.tensor(g))
+            b_d.backward(dpln.Tensor(g))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+
+
 class TestLog(unittest.TestCase):
     def test_log_0(self):
         for _ in range(100):

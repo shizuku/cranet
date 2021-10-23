@@ -19,6 +19,60 @@ def abs(x: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
+def max(x: Tensor, axis=None, keepdims=False) -> Tensor:
+    # TODO: fix epsilon
+    data = np.amax(x.data, axis=axis, keepdims=keepdims)
+    requires_grad = x.requires_grad
+    dependencies = []
+
+    if x.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            if axis is None:
+                ret = np.zeros_like(x.data)
+                x_am = x.data.argmax()
+                idx = np.unravel_index(x_am, x.shape)
+                ret[idx] = grad
+                return ret
+            else:
+                ret = np.zeros_like(x.data)
+                x_am = x.data.argmax(axis=axis)
+                x_am = np.expand_dims(x_am, axis=axis)
+                grad_r = grad if keepdims else np.expand_dims(grad, axis=axis)
+                np.put_along_axis(ret, x_am, grad_r, axis=axis)
+                return ret
+
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "max"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def min(x: Tensor, axis=None, keepdims=False) -> Tensor:
+    # TODO: fix epsilon
+    data = np.amin(x.data, axis=axis, keepdims=keepdims)
+    requires_grad = x.requires_grad
+    dependencies = []
+
+    if x.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            if axis is None:
+                ret = np.zeros_like(x.data)
+                x_am = x.data.argmin()
+                idx = np.unravel_index(x_am, x.shape)
+                ret[idx] = grad
+                return ret
+            else:
+                ret = np.zeros_like(x.data)
+                x_am = x.data.argmin(axis=axis)
+                x_am = np.expand_dims(x_am, axis=axis)
+                grad_r = grad if keepdims else np.expand_dims(grad, axis=axis)
+                np.put_along_axis(ret, x_am, grad_r, axis=axis)
+                return ret
+
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "max"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
 def log(x: Tensor) -> Tensor:
     data = np.log(x.data)
     requires_grad = x.requires_grad
