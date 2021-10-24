@@ -226,8 +226,8 @@ def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
     return AF.dropout(x, p, training)
 
 
-def flatten(x: Tensor) -> Tensor:
-    return x.flatten()
+def flatten(x: Tensor, start_dim=1, end_dim=-1) -> Tensor:
+    return x.flatten(start_dim, end_dim)
 
 
 # activation

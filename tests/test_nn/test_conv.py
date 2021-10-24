@@ -9,11 +9,18 @@ from torch.nn import functional as torch_F
 from src.dpln.nn import functional as dpln_F
 
 from src import dpln
+from src.dpln import nn
 
 from ..utils import np_feq
 
 
 class TestConv2d(unittest.TestCase):
+    def test_0(self):
+        inp = dpln.uniform((11, 3, 32, 32))
+        model = nn.Conv2d(3, 32, 3, padding='same')
+        out = model(inp)
+        print(out.shape)
+
     def test_conv2d_1(self):
         for _ in range(100):
             w = np.random.rand(8, 1, 3, 3)

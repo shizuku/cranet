@@ -52,6 +52,18 @@ class TestMaxPool2d(unittest.TestCase):
         self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
 
 
+class TestFlatten(unittest.TestCase):
+    def test_0(self):
+        a = dpln.zeros((3, 4, 5, 6, 7, 8, 9))
+        b = dpln_F.flatten(a)
+        self.assertTrue(b.shape == (3, 4 * 5 * 6 * 7 * 8 * 9))
+
+    def test_1(self):
+        a = dpln.zeros((1, 2, 3, 4, 5, 6, 7, 8, 9))
+        b = dpln_F.flatten(a, 2, -2)
+        self.assertTrue(b.shape == (1, 2, 3 * 4 * 5 * 6 * 7 * 8, 9))
+
+
 if __name__ == '__main__':
     sys.path.append(os.getcwd())
     unittest.main()

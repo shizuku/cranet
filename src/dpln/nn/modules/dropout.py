@@ -11,3 +11,6 @@ class Dropout(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return F.dropout(x, self.p)
+
+    def __repr__(self) -> str:
+        return f"Dropout"

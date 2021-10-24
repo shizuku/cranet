@@ -10,6 +10,12 @@ from .container import (
 from .conv import (
     Conv2d
 )
+from .dropout import (
+    Dropout
+)
+from .flatten import (
+    Flatten
+)
 from .linear import (
     Linear
 )
@@ -20,4 +26,7 @@ from .loss import (
 )
 from .module import (
     Module
+)
+from .pooling import (
+    MaxPool2d
 )

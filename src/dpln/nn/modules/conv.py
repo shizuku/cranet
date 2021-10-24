@@ -88,7 +88,7 @@ class Conv2d(Module):
     def reset_parameters(self, use_bias: bool = True) -> None:
         """init(reset) parameters"""
         sqrt_k = math.sqrt(self.groups / (self.in_channels * self.kernel_size[0] * self.kernel_size[1]))
-        weight_data = init.uniform_([self.out_channels, self.in_channels / self.groups, self.kernel_size[0], self.kernel_size[1]], -sqrt_k, sqrt_k)
+        weight_data = init.uniform_([self.out_channels, self.in_channels // self.groups, self.kernel_size[0], self.kernel_size[1]], -sqrt_k, sqrt_k)
         self.weight = Parameter(weight_data)
         if use_bias:
             bias_data = init.uniform_([self.out_channels], -sqrt_k, sqrt_k)

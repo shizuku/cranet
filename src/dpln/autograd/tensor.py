@@ -107,8 +107,8 @@ class Tensor:
     def reshape(self, *sp):
         return reshape(self, sp)
 
-    def flatten(self):
-        return flatten(self)
+    def flatten(self, start_dim=0, end_dim=-1):
+        return flatten(self, start_dim, end_dim)
 
     @property
     def T(self) -> Tensor:
@@ -269,8 +269,21 @@ def reshape(t: Tensor, shape) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def flatten(t: Tensor) -> Tensor:
-    data = t.data.flatten()
+def flatten(t: Tensor, start_dim=0, end_dim=-1) -> Tensor:
+    if start_dim < 0:
+        start_dim = t.data.ndim + start_dim
+    if end_dim < 0:
+        end_dim = t.data.ndim + end_dim
+    sp = []
+    for i in range(0, start_dim):
+        sp.append(t.shape[i])
+    p = 1
+    for i in range(start_dim, end_dim + 1):
+        p *= t.shape[i]
+    sp.append(p)
+    for i in range(end_dim + 1, t.data.ndim):
+        sp.append(t.shape[i])
+    data = t.data.reshape(sp)
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
 
