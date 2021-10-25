@@ -229,7 +229,7 @@ def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
     return AF.dropout(x, p, training)
 
 
-def flatten(x: Tensor, start_dim=1, end_dim=-1) -> Tensor:
+def flatten(x: Tensor, start_dim: int = 1, end_dim: int = -1) -> Tensor:
     return x.flatten(start_dim, end_dim)
 
 
@@ -243,11 +243,11 @@ def sigmoid(x: Tensor) -> Tensor:
     return AF.sigmoid(x)
 
 
-def softmax(x: Tensor, dim=-1) -> Tensor:
+def softmax(x: Tensor, dim: int = -1) -> Tensor:
     return AF.softmax(x, dim=dim)
 
 
-def log_softmax(x: Tensor, dim=-1) -> Tensor:
+def log_softmax(x: Tensor, dim: int = -1) -> Tensor:
     return AF.log(AF.softmax(x, dim=dim))
 
 
@@ -272,7 +272,7 @@ def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
 
 
 def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
-    L = (x - y) ** 2
+    L = (x - y) ** Tensor(2)
 
     if reduction.lower() == 'mean':
         return L.mean()
@@ -297,7 +297,7 @@ def binary_cross_entropy(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, 
     """
     assert np.logical_and(x.data > 0, x.data < 1).all(), "elements of input should between 0 and 1"
     w = Tensor(1)
-    if weight is not None:
+    if weight:
         w = weight
 
     L = -w * (y * AF.log(x) + (1 - y) * AF.log(1 - x))
@@ -306,7 +306,7 @@ def binary_cross_entropy(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, 
         return L.mean()
     elif reduction == 'sum':
         return L.sum()
-    elif reduction is None:
+    elif reduction.lower() == 'none':
         return L
     else:
         raise ValueError("reduction must be 'mean', 'sum', or None")
