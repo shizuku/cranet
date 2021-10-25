@@ -12,7 +12,7 @@ from typing import (
 
 class MaxPool2d(Module):
     def __init__(self, kernel_size: Union[Tuple, List, int],
-                 stride: Union[Tuple, List, int] = 1,
+                 stride: Union[Tuple, List, int] = None,
                  padding: Union[Tuple, List, int] = 0,
                  dilation: Union[Tuple, List, int] = 1,
                  padding_mode: str = 'zeros'):
@@ -25,7 +25,9 @@ class MaxPool2d(Module):
         else:
             raise ValueError("value of `kernel_size` must be int, tuple or list")
 
-        if type(stride) == int:
+        if stride is None:
+            self.stride = self.kernel_size
+        elif type(stride) == int:
             self.stride = (stride, stride)
         elif type(stride) in [tuple, list]:
             assert len(stride) == 2

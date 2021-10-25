@@ -106,7 +106,7 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
         a = (a_w @ a_x)
         g.append(a)
 
-    ret = concat(g, axis=1)
+    ret = concat(g, dim=1)
     ret = ret.reshape(bs, ch_o, h_o, w_o)
     if bias is None:
         return ret
@@ -160,7 +160,7 @@ def padding2d(x: Tensor, padding: Union[Tuple, List, int], mode: str) -> Tensor:
 
 
 def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
-               stride: Union[Tuple, List, int] = 1,
+               stride: Optional[Union[Tuple, List, int]] = None,
                padding: Union[Tuple, List, int] = 0,
                dilation: Union[Tuple, List, int] = 1,
                padding_mode: str = 'zeros') -> Tensor:
@@ -173,7 +173,9 @@ def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
     _, _, h_k, w_k = kernel_size
 
     stride_err_msg = "value of `stride` must be tuple of 2 or int"
-    if type(stride) == int:
+    if stride is None:
+        stride = kernel_size
+    elif type(stride) == int:
         stride = (stride, stride)
     elif type(stride) in [tuple, list]:
         assert len(stride) == 2, stride_err_msg
@@ -218,8 +220,8 @@ def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
 
     pad_inp = padding2d(x, padding, padding_mode)
     col = im2col2d(pad_inp, kernel_size, stride, dilation)
-    a = AF.max(col, axis=-1).reshape(bs, h_o, w_o, ch_i)
-    return a.permute(axes=(0, 3, 1, 2))
+    a = AF.max(col, dim=-1).reshape(bs, h_o, w_o, ch_i)
+    return a.permute(dims=(0, 3, 1, 2))
 
 
 def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
@@ -240,12 +242,12 @@ def sigmoid(x: Tensor) -> Tensor:
     return AF.sigmoid(x)
 
 
-def softmax(x: Tensor, axis=-1) -> Tensor:
-    return AF.softmax(x, axis=axis)
+def softmax(x: Tensor, dim=-1) -> Tensor:
+    return AF.softmax(x, dim=dim)
 
 
-def log_softmax(x: Tensor, axis=-1) -> Tensor:
-    return AF.log(AF.softmax(x, axis=axis))
+def log_softmax(x: Tensor, dim=-1) -> Tensor:
+    return AF.log(AF.softmax(x, dim=dim))
 
 
 def tanh(x: Tensor) -> Tensor:

@@ -23,7 +23,7 @@ def im2col2d(x: Tensor, kernel_shape: Union[Tuple, List], stride: Union[Tuple, L
         for j in range(0, w_i - w_k_t + 1, stride[1]):
             m = x[:, :, i:i + h_k_t:dilation[0], j:j + w_k_t:dilation[1]]
             ret.append(m.reshape(bs, 1, ch_i, h_k * w_k))
-    return concat(ret, axis=1)
+    return concat(ret, dim=1)
 
 
 def str2pad2d(padding: str, inp_shape, kernel_shape: Union[Tuple, List], stride: Tuple[int, int]):

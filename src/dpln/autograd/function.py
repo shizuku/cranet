@@ -22,15 +22,15 @@ def abs(x: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def max(x: Tensor, axis=None, keepdims=False) -> Tensor:
+def max(x: Tensor, dim=None, keepdim=False) -> Tensor:
     # TODO: fix epsilon
-    data = np.amax(x.data, axis=axis, keepdims=keepdims)
+    data = np.amax(x.data, axis=dim, keepdims=keepdim)
     requires_grad = x.requires_grad
     dependencies = []
 
     if x.requires_grad:
         def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-            if axis is None:
+            if dim is None:
                 ret = np.zeros_like(x.data)
                 x_am = x.data.argmax()
                 idx = np.unravel_index(x_am, x.shape)
@@ -38,10 +38,10 @@ def max(x: Tensor, axis=None, keepdims=False) -> Tensor:
                 return ret
             else:
                 ret = np.zeros_like(x.data)
-                x_am = x.data.argmax(axis=axis)
-                x_am = np.expand_dims(x_am, axis=axis)
-                grad_r = grad if keepdims else np.expand_dims(grad, axis=axis)
-                np.put_along_axis(ret, x_am, grad_r, axis=axis)
+                x_am = x.data.argmax(axis=dim)
+                x_am = np.expand_dims(x_am, axis=dim)
+                grad_r = grad if keepdim else np.expand_dims(grad, axis=dim)
+                np.put_along_axis(ret, x_am, grad_r, axis=dim)
                 return ret
 
         dependencies.append(Dependency(x, grad_fn, meta={"name": "max"}))
@@ -49,15 +49,15 @@ def max(x: Tensor, axis=None, keepdims=False) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def min(x: Tensor, axis=None, keepdims=False) -> Tensor:
+def min(x: Tensor, dim=None, keepdim=False) -> Tensor:
     # TODO: fix epsilon
-    data = np.amin(x.data, axis=axis, keepdims=keepdims)
+    data = np.amin(x.data, axis=dim, keepdims=keepdim)
     requires_grad = x.requires_grad
     dependencies = []
 
     if x.requires_grad:
         def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-            if axis is None:
+            if dim is None:
                 ret = np.zeros_like(x.data)
                 x_am = x.data.argmin()
                 idx = np.unravel_index(x_am, x.shape)
@@ -65,10 +65,10 @@ def min(x: Tensor, axis=None, keepdims=False) -> Tensor:
                 return ret
             else:
                 ret = np.zeros_like(x.data)
-                x_am = x.data.argmin(axis=axis)
-                x_am = np.expand_dims(x_am, axis=axis)
-                grad_r = grad if keepdims else np.expand_dims(grad, axis=axis)
-                np.put_along_axis(ret, x_am, grad_r, axis=axis)
+                x_am = x.data.argmin(axis=dim)
+                x_am = np.expand_dims(x_am, axis=dim)
+                grad_r = grad if keepdim else np.expand_dims(grad, axis=dim)
+                np.put_along_axis(ret, x_am, grad_r, axis=dim)
                 return ret
 
         dependencies.append(Dependency(x, grad_fn, meta={"name": "max"}))
@@ -150,9 +150,9 @@ def sigmoid(x: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def softmax(x: Tensor, axis=-1) -> Tensor:
+def softmax(x: Tensor, dim=-1) -> Tensor:
     e = np.exp(x.data - np.max(x.data))
-    data = e / np.sum(e, axis=axis, keepdims=True)  # (bs, n)
+    data = e / np.sum(e, axis=dim, keepdims=True)  # (bs, n)
     requires_grad = x.requires_grad
     dependencies = []
 
