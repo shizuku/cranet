@@ -3,6 +3,7 @@ from ..autograd import function as AF
 from .utils import im2col2d, str2pad2d
 
 import math
+import numpy as np
 from typing import (
     Optional,
     Tuple,
@@ -256,7 +257,7 @@ def tanh(x: Tensor) -> Tensor:
 
 # loss
 
-def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
+def l1_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
     # TODO: test
     L = AF.abs(x - y)
 
@@ -270,9 +271,9 @@ def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
         raise ValueError("reduction must be 'mean', 'sum', or None")
 
 
-def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
+def mse_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
     # TODO: test
-    L = (x - y) ** 2
+    L = (x - y) ** Tensor(2)
 
     if reduction.lower() == 'mean':
         return L.mean()
@@ -284,23 +285,45 @@ def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
         raise ValueError("reduction must be 'mean', 'sum', or None")
 
 
-def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: str = 'mean') -> Tensor:
-    # TODO: test
-    pass
+def binary_cross_entropy(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: Optional[str] = 'mean') -> Tensor:
+    """
+    Args:
+        x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
+        y: :math:`(N, *)`, same shape as the input
+        weight: a manual rescaling weight given to the loss of each batch element. If given, has to be a Tensor of size N.
+        reduction:
+
+    Returns:
+        scalar. If :attr:`reduction` is ``'none'``, then :math:`(N, *)`, same shape as input.
+    """
+    assert np.logical_and(x.data > 0, x.data < 1).all(), "elements of input should between 0 and 1"
+    w = Tensor(1)
+    if weight is not None:
+        w = weight
+
+    L = -w * (y * AF.log(x) + (1 - y) * AF.log(1 - x))
+
+    if reduction == 'mean':
+        return L.mean()
+    elif reduction == 'sum':
+        return L.sum()
+    elif reduction is None:
+        return L
+    else:
+        raise ValueError("reduction must be 'mean', 'sum', or None")
 
 
-def nll_loss(x: Tensor, y: Tensor,
-             weight: Optional[Tensor] = None,
-             reduction: str = 'mean') -> Tensor:
+def nll_loss(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: str = 'mean') -> Tensor:
     # TODO: impl weight
     assert x.dim() == 2
     assert y.dim() == 1
 
-    L = -AF.nll(x, y, axis=-1)
-
+    w = Tensor(1)
     if weight:
         assert weight.dim() == 1
-        L = weight * L
+        w = weight
+
+    L = -w * AF.nll(x, y, axis=-1)
 
     if reduction.lower() == 'mean':
         return L.mean()
@@ -309,4 +332,9 @@ def nll_loss(x: Tensor, y: Tensor,
     elif reduction.lower() == 'none':
         return L
     else:
-        raise ValueError("reduction must be 'mean', 'sum', or None")
+        raise ValueError("reduction must be 'mean', 'sum', or 'none'")
+
+
+def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: Optional[str] = 'mean') -> Tensor:
+    # TODO: test impl weight
+    return nll_loss(log_softmax(x), y, weight, reduction)
