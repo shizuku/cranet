@@ -114,6 +114,11 @@ class Tensor:
     def T(self) -> Tensor:
         return permute(self, list(range(len(self.shape) - 1, -1, -1)))
 
+    def detach(self) -> Tensor:
+        new_data = self._data.copy()
+        new_requires_grad = self.requires_grad
+        return Tensor(new_data, new_requires_grad)
+
     def __add__(self, other) -> Tensor:
         """called if `self + other`"""
         return add(self, ensure_tensor(other))

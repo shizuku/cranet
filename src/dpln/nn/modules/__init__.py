@@ -23,6 +23,7 @@ from .loss import (
     MSELoss,
     L1Loss,
     CrossEntropyLoss,
+    NLLLoss,
 )
 from .module import (
     Module

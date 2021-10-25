@@ -244,6 +244,10 @@ def softmax(x: Tensor, axis=-1) -> Tensor:
     return AF.softmax(x, axis=axis)
 
 
+def log_softmax(x: Tensor, axis=-1) -> Tensor:
+    return AF.log(AF.softmax(x, axis=axis))
+
+
 def tanh(x: Tensor) -> Tensor:
     return AF.tanh(x)
 
@@ -254,11 +258,11 @@ def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
     L = AF.abs(x - y)
 
-    if reduction == 'mean':
+    if reduction.lower() == 'mean':
         return L.mean()
-    elif reduction == 'sum':
+    elif reduction.lower() == 'sum':
         return L.sum()
-    elif reduction is None:
+    elif reduction.lower() == 'none':
         return L
     else:
         raise ValueError("reduction must be 'mean', 'sum', or None")
@@ -268,11 +272,11 @@ def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
     L = (x - y) ** 2
 
-    if reduction == 'mean':
+    if reduction.lower() == 'mean':
         return L.mean()
-    elif reduction == 'sum':
+    elif reduction.lower() == 'sum':
         return L.sum()
-    elif reduction is None:
+    elif reduction.lower() == 'none':
         return L
     else:
         raise ValueError("reduction must be 'mean', 'sum', or None")
@@ -281,3 +285,26 @@ def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
 def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: str = 'mean') -> Tensor:
     # TODO: test
     pass
+
+
+def nll_loss(x: Tensor, y: Tensor,
+             weight: Optional[Tensor] = None,
+             reduction: str = 'mean') -> Tensor:
+    # TODO: impl weight
+    assert x.dim() == 2
+    assert y.dim() == 1
+
+    L = -AF.nll(x, y, axis=-1)
+
+    if weight:
+        assert weight.dim() == 1
+        L = weight * L
+
+    if reduction.lower() == 'mean':
+        return L.mean()
+    elif reduction.lower() == 'sum':
+        return L.sum()
+    elif reduction.lower() == 'none':
+        return L
+    else:
+        raise ValueError("reduction must be 'mean', 'sum', or None")
