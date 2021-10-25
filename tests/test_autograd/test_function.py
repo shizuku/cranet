@@ -98,7 +98,7 @@ class TestMax(unittest.TestCase):
             a_d = dpln.Tensor(a, requires_grad=True)
             a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(0, 5)
-            b_d = dpln.max(a_d, axis=axis)
+            b_d = dpln.max(a_d, dim=axis)
             b_t = torch.max(a_t, dim=axis).values
             self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
             g = np.random.rand(*b_d.shape)
@@ -112,7 +112,7 @@ class TestMax(unittest.TestCase):
             a_d = dpln.Tensor(a, requires_grad=True)
             a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(0, 5)
-            b_d = dpln.max(a_d, axis=axis, keepdims=True)
+            b_d = dpln.max(a_d, dim=axis, keepdim=True)
             b_t = torch.max(a_t, dim=axis, keepdim=True).values
             self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
             g = np.random.rand(*b_d.shape)
@@ -153,7 +153,7 @@ class TestMin(unittest.TestCase):
             a_d = dpln.Tensor(a, requires_grad=True)
             a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(0, 5)
-            b_d = dpln.min(a_d, axis=axis)
+            b_d = dpln.min(a_d, dim=axis)
             b_t = torch.min(a_t, dim=axis).values
             self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
             g = np.random.rand(*b_d.shape)
@@ -167,7 +167,7 @@ class TestMin(unittest.TestCase):
             a_d = dpln.Tensor(a, requires_grad=True)
             a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(0, 5)
-            b_d = dpln.min(a_d, axis=axis, keepdims=True)
+            b_d = dpln.min(a_d, dim=axis, keepdim=True)
             b_t = torch.min(a_t, dim=axis, keepdim=True).values
             self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
             g = np.random.rand(*b_d.shape)
@@ -261,7 +261,7 @@ class TestSoftmax(unittest.TestCase):
         for _ in range(100):
             a = np.random.rand(13, 10)
             a0 = dpln.Tensor(a, requires_grad=True)
-            b0 = dpln.softmax(a0, axis=-1)
+            b0 = dpln.softmax(a0, dim=-1)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.softmax(a1, dim=-1)
             self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
