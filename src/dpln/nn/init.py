@@ -1,12 +1,9 @@
+from ..autograd.tensor import Shapable
 from typing import (
-    Tuple,
     Union,
-    List,
 )
 
 import numpy as np
-
-Shapable = Union[Tuple, List]
 
 
 # TODO: impl initializers

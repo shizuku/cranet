@@ -19,10 +19,10 @@ from typing import (
 class Dependency(NamedTuple):
     tensor: Tensor
     grad_fn: Callable[[np.ndarray, Optional[Dict]], np.ndarray]
-    meta: Dict = None
+    meta: Optional[Dict] = None
 
 
-Shapable = Union[Tuple, List, int]
+Shapable = Union[Tuple[int], List[int], int]
 Arrayable = Union[float, list, np.ndarray]
 Tensorable = Union['Tensor', float, np.ndarray]
 
@@ -104,11 +104,17 @@ class Tensor:
     def permute(self, dims: Union[List, Tuple]) -> Tensor:
         return permute(self, dims)
 
-    def reshape(self, *sp):
+    def reshape(self, *sp: int) -> Tensor:
         return reshape(self, sp)
 
     def flatten(self, start_dim=0, end_dim=-1):
         return flatten(self, start_dim, end_dim)
+
+    def diag(self, diagonal: int = 0) -> Tensor:
+        return diag(self, diagonal)
+
+    def index_select(self, dim: int, index) -> Tensor:
+        return index_select(self, dim, index)
 
     @property
     def T(self) -> Tensor:
@@ -188,9 +194,9 @@ class Tensor:
         self.data = self.data @ ensure_tensor(other).data
         return self
 
-    def __pow__(self, n):
+    def __pow__(self, e: Tensor) -> Tensor:
         """called if `self ** other`"""
-        return power(self, ensure_tensor(n))
+        return power(self, ensure_tensor(e))
 
     def __eq__(self, other: object) -> bool:
         """test if `self == other`"""
@@ -206,7 +212,7 @@ class Tensor:
     def __repr__(self) -> str:
         return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad})"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self.data.data))
 
 
@@ -215,6 +221,8 @@ def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
 
 
 def zeros_like(a, dtype=None, order='K', subok=True, shape=None, requires_grad=False) -> Tensor:
+    if dtype is None:
+        dtype = a.data.dtype
     return Tensor(np.zeros_like(a=a, dtype=dtype, order=order, subok=subok, shape=shape), requires_grad=requires_grad)
 
 
@@ -245,22 +253,29 @@ def _slice(t: Tensor, idxs) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def pad(t: Tensor, pad_width, mode='constant', **kwargs) -> Tensor:
-    data = np.pad(t.data, pad_width, mode, **kwargs)
-    requires_grad = t.requires_grad
+def concat(tensors: Sequence[Tensor], dim: int = 0) -> Tensor:
+    assert len(tensors) > 0
+    dim = tensors[0].dim()
+    data = np.concatenate([t.data for t in tensors], axis=dim)
+    requires_grad = True in [t.requires_grad for t in tensors]
     dependencies: List[Dependency] = []
 
-    if t.requires_grad:
-        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-            idx = tuple([np.s_[pad_width[i][0]:grad.shape[i] - pad_width[i][1]] for i in range(grad.ndim)])
-            return grad[idx]
+    a = 0
+    b = 0
+    for i, t in enumerate(tensors):
+        b += tensors[i].shape[dim]
+        if t.requires_grad:
+            def grad_fn(grad: np.ndarray, meta) -> np.ndarray:
+                idx = tuple([np.s_[meta["a"]:meta["b"]] if j == dim else np.s_[:] for j in range(dim)])
+                return grad[idx]
 
-        dependencies.append(Dependency(t, grad_fn, meta={"name": "pad"}))
+            dependencies.append(Dependency(t, grad_fn, meta={"name": "concat", "id": i, "a": a, "b": b}))
+        a += tensors[i].shape[dim]
 
     return Tensor(data, requires_grad, dependencies)
 
 
-def reshape(t: Tensor, shape) -> Tensor:
+def reshape(t: Tensor, shape: Shapable) -> Tensor:
     data = t.data.reshape(shape)
     requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
@@ -301,24 +316,47 @@ def flatten(t: Tensor, start_dim=0, end_dim=-1) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def concat(tensors: Sequence[Tensor], dim: int = 0) -> Tensor:
-    assert len(tensors) > 0
-    dim = tensors[0].dim()
-    data = np.concatenate([t.data for t in tensors], axis=dim)
-    requires_grad = True in [t.requires_grad for t in tensors]
+def pad(t: Tensor, pad_width, mode='constant', **kwargs) -> Tensor:
+    data = np.pad(t.data, pad_width, mode, **kwargs)
+    requires_grad = t.requires_grad
     dependencies: List[Dependency] = []
 
-    a = 0
-    b = 0
-    for i, t in enumerate(tensors):
-        b += tensors[i].shape[dim]
-        if t.requires_grad:
-            def grad_fn(grad: np.ndarray, meta) -> np.ndarray:
-                idx = tuple([np.s_[meta["a"]:meta["b"]] if j == dim else np.s_[:] for j in range(dim)])
-                return grad[idx]
+    if t.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            idx = tuple([np.s_[pad_width[i][0]:grad.shape[i] - pad_width[i][1]] for i in range(grad.ndim)])
+            return grad[idx]
 
-            dependencies.append(Dependency(t, grad_fn, meta={"name": "concat", "id": i, "a": a, "b": b}))
-        a += tensors[i].shape[dim]
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "pad"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def index_select(t: Tensor, dim: int, index: List[int]) -> Tensor:
+    # TODO: impl grad
+    data = np.take(t.data, index, dim)
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            pass
+
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "index_select"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def diag(t: Tensor, diagonal: int = 0) -> Tensor:
+    # TODO: impl grad
+    data = np.diag(t.data, diagonal)
+    requires_grad = t.requires_grad
+    dependencies: List[Dependency] = []
+
+    if requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            pass
+
+        dependencies.append(Dependency(t, grad_fn, meta={"name": "diag"}))
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -350,7 +388,7 @@ def mean(t: Tensor, dim: Optional[Shapable] = None) -> Tensor:
         numel = t.numel()
     else:
         total_numel = t.numel()
-        numel = total_numel / data.numel()
+        numel = total_numel // data.numel()
     return data / numel
 
 

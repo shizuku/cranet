@@ -48,9 +48,82 @@ class TestMse(unittest.TestCase):
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
 
+class TestBCELoss(unittest.TestCase):
+    def test_binary_cross_entropy_0(self):
+        for _ in range(1000):
+            a = np.random.rand(10)
+            b = np.random.rand(10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = dpln.Tensor(b, requires_grad=True)
+            b1 = torch.tensor(b)
+            c0 = dpln_F.binary_cross_entropy(a0, b0, reduction='mean')
+            c1 = torch_F.binary_cross_entropy(a1, b1, reduction='mean')
+            c0.zero_grad()
+            c1.backward()
+            c0.backward()
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-11))
+
+    def test_binary_cross_entropy_1(self):
+        for _ in range(1000):
+            a = np.random.rand(10)
+            b = np.random.rand(10)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = dpln.Tensor(b, requires_grad=True)
+            b1 = torch.tensor(b)
+            c0 = dpln_F.binary_cross_entropy(a0, b0, reduction='sum')
+            c1 = torch_F.binary_cross_entropy(a1, b1, reduction='sum')
+            c0.zero_grad()
+            c1.backward()
+            c0.backward()
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
+
+    def test_binary_cross_entropy_2(self):
+        for _ in range(1000):
+            a = np.random.rand(3, 5)
+            b = np.random.rand(3, 5)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = dpln.Tensor(b, requires_grad=True)
+            b1 = torch.tensor(b)
+            c0 = dpln_F.binary_cross_entropy(a0, b0, reduction='mean')
+            c1 = torch_F.binary_cross_entropy(a1, b1, reduction='mean')
+            c0.zero_grad()
+            c1.backward()
+            c0.backward()
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-9))
+
+    def test_binary_cross_entropy_3(self):
+        for _ in range(1000):
+            a = np.random.rand(3, 5, 4)
+            b = np.random.rand(3, 5, 4)
+            a0 = dpln.Tensor(a, requires_grad=True)
+            a1 = torch.tensor(a, requires_grad=True)
+            b0 = dpln.Tensor(b, requires_grad=True)
+            b1 = torch.tensor(b)
+            c0 = dpln_F.binary_cross_entropy(a0, b0, reduction='sum')
+            c1 = torch_F.binary_cross_entropy(a1, b1, reduction='sum')
+            c0.zero_grad()
+            c1.backward()
+            c0.backward()
+            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-9))
+
+
 class TestCrossEntropy(unittest.TestCase):
-    def test_cross_entropy(self):
+    def test_cross_entropy_0(self):
         pass
+        # y = np.array([1, 0, 0])
+        # y1 = np.array([0.7, 0.2, 0.1])
+        # Y = dpln.Tensor(y)
+        # Y1 = dpln.Tensor(y1)
+        # l = dpln_F.cross_entropy(Y, Y1, reduction="sum")
+        # print(l)
+        # # print(f"loss: {l:.4f}")
 
 
 class TestNllLoss(unittest.TestCase):
