@@ -184,9 +184,9 @@ def tanh(x: Tensor) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def nll(x: Tensor, y: Tensor, w: Optional[Tensor] = None, axis=-1) -> Tensor:
+def nll(x: Tensor, y: Tensor, w: Optional[Tensor] = None, dim=-1) -> Tensor:
     indices = np.expand_dims(y.data, axis=-1)
-    data = np.take_along_axis(x.data, indices, axis=axis)
+    data = np.take_along_axis(x.data, indices, axis=dim)
     if w:
         data = np.take_along_axis(w, indices, axis=0) * data
     data = data.squeeze()
@@ -197,7 +197,7 @@ def nll(x: Tensor, y: Tensor, w: Optional[Tensor] = None, axis=-1) -> Tensor:
         def grad_fn(grad: np.ndarray, _) -> np.ndarray:
             assert grad.shape == data.shape
             ret = np.zeros_like(x.data)
-            np.put_along_axis(ret, indices, np.expand_dims(grad, -1), axis=axis)
+            np.put_along_axis(ret, indices, np.expand_dims(grad, -1), axis=dim)
             assert ret.shape == x.shape
             return ret
 

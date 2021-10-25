@@ -42,7 +42,9 @@ def ensure_tensor(tensorable: Tensorable) -> Tensor:
 
 
 class Tensor:
-    def __init__(self, data: Arrayable, requires_grad: bool = False, dependencies: List[Dependency] = None) -> None:
+    def __init__(self, data: Arrayable,
+                 requires_grad: bool = False,
+                 dependencies: List[Dependency] = None) -> None:
         self._data = ensure_array(data)
         self.requires_grad = requires_grad
         self.dependencies = dependencies or []

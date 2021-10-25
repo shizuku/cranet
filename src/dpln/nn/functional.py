@@ -257,7 +257,7 @@ def tanh(x: Tensor) -> Tensor:
 
 # loss
 
-def l1_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
+def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
     # TODO: test
     L = AF.abs(x - y)
 
@@ -271,9 +271,8 @@ def l1_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
         raise ValueError("reduction must be 'mean', 'sum', or None")
 
 
-def mse_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
-    # TODO: test
-    L = (x - y) ** Tensor(2)
+def mse_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
+    L = (x - y) ** 2
 
     if reduction.lower() == 'mean':
         return L.mean()
@@ -285,7 +284,7 @@ def mse_loss(x: Tensor, y: Tensor, reduction: Optional[str] = 'mean') -> Tensor:
         raise ValueError("reduction must be 'mean', 'sum', or None")
 
 
-def binary_cross_entropy(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: Optional[str] = 'mean') -> Tensor:
+def binary_cross_entropy(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: str = 'mean') -> Tensor:
     """
     Args:
         x: :math:`(N, *)` where :math:`*` means, any number of additional dimensions
@@ -323,7 +322,7 @@ def nll_loss(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: s
         assert weight.dim() == 1
         w = weight
 
-    L = -w * AF.nll(x, y, axis=-1)
+    L = -w * AF.nll(x, y, dim=-1)
 
     if reduction.lower() == 'mean':
         return L.mean()
@@ -335,6 +334,6 @@ def nll_loss(x: Tensor, y: Tensor, weight: Optional[Tensor] = None, reduction: s
         raise ValueError("reduction must be 'mean', 'sum', or 'none'")
 
 
-def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: Optional[str] = 'mean') -> Tensor:
-    # TODO: test impl weight
+def cross_entropy(x: Tensor, y: Tensor, weight=None, reduction: str = 'mean') -> Tensor:
+    # TODO: impl weight
     return nll_loss(log_softmax(x), y, weight, reduction)
