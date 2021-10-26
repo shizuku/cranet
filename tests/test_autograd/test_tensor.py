@@ -305,25 +305,6 @@ class TestTensorTruediv(unittest.TestCase):
 
 
 class TestTensorMatmul(unittest.TestCase):
-    def test_matmul_0(self):
-        for _ in range(1000):
-            a = np.random.rand(8, 10)
-            b = np.random.rand(10)
-            g = np.random.rand(8)
-            a_d = dpln.Tensor(a, requires_grad=True)
-            b_d = dpln.Tensor(b, requires_grad=True)
-            g_d = dpln.Tensor(g)
-            a_t = torch.tensor(a, requires_grad=True)
-            b_t = torch.tensor(b, requires_grad=True)
-            g_t = torch.tensor(g)
-            y_d = a_d @ b_d
-            y_t = a_t @ b_t
-            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
-            y_d.backward(g_d)
-            y_t.backward(g_t)
-            self.assertTrue((a_d.grad.numpy() == a_t.grad.numpy()).all())
-            self.assertTrue((b_d.grad.numpy() == b_t.grad.numpy()).all())
-
     def test_matmul_1(self):
         for _ in range(1000):
             a = np.random.rand(8, 10)
@@ -336,9 +317,9 @@ class TestTensorMatmul(unittest.TestCase):
             b1 = torch.tensor(b, requires_grad=True)
             y = a1 @ b1
             y.backward(torch.ones_like(y))
-            self.assertTrue((x.numpy() == y.detach().numpy()).all())
-            self.assertTrue((a0.grad.numpy() == a1.grad.numpy()).all())
-            self.assertTrue((b0.grad.numpy() == b1.grad.numpy()).all())
+            self.assertTrue(np_feq(x.numpy(), y.detach().numpy()))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.numpy()))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.numpy()))
 
     def test_matmul_2_1(self):
         for _ in range(1000):
@@ -383,6 +364,82 @@ class TestTensorMatmul(unittest.TestCase):
             a = np.random.rand(3, 3, 3, 8, 5)
             b = np.random.rand(5, 8)
             g = np.random.rand(3, 3, 3, 8, 8)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            b_d = dpln.Tensor(b, requires_grad=True)
+            g_d = dpln.Tensor(g)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            g_t = torch.tensor(g)
+            y_d = a_d @ b_d
+            y_t = a_t @ b_t
+            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
+            y_t.backward(g_t)
+            y_d.backward(g_d)
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+
+    def test_matmul_4_1(self):
+        for _ in range(1000):
+            a = np.random.rand(8, 5)
+            b = np.random.rand(5)
+            g = np.random.rand(8)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            b_d = dpln.Tensor(b, requires_grad=True)
+            g_d = dpln.Tensor(g)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            g_t = torch.tensor(g)
+            y_d = a_d @ b_d
+            y_t = a_t @ b_t
+            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
+            y_t.backward(g_t)
+            y_d.backward(g_d)
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+
+    def test_matmul_4_2(self):
+        for _ in range(1000):
+            a = np.random.rand(5)
+            b = np.random.rand(5, 6)
+            g = np.random.rand(6)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            b_d = dpln.Tensor(b, requires_grad=True)
+            g_d = dpln.Tensor(g)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            g_t = torch.tensor(g)
+            y_d = a_d @ b_d
+            y_t = a_t @ b_t
+            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
+            y_t.backward(g_t)
+            y_d.backward(g_d)
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+
+    def test_matmul_5_1(self):
+        for _ in range(1000):
+            a = np.random.rand(3, 4, 8, 5)
+            b = np.random.rand(5)
+            g = np.random.rand(3, 4, 8)
+            a_d = dpln.Tensor(a, requires_grad=True)
+            b_d = dpln.Tensor(b, requires_grad=True)
+            g_d = dpln.Tensor(g)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            g_t = torch.tensor(g)
+            y_d = a_d @ b_d
+            y_t = a_t @ b_t
+            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
+            y_t.backward(g_t)
+            y_d.backward(g_d)
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+
+    def test_matmul_5_2(self):
+        for _ in range(1000):
+            a = np.random.rand(5)
+            b = np.random.rand(3, 4, 5, 6)
+            g = np.random.rand(3, 4, 6)
             a_d = dpln.Tensor(a, requires_grad=True)
             b_d = dpln.Tensor(b, requires_grad=True)
             g_d = dpln.Tensor(g)

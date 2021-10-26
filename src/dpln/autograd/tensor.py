@@ -541,7 +541,6 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
 
 
 def matmul(t1: Tensor, t2: Tensor) -> Tensor:
-    # TODO: fix one dim
     """
     if t1 is (n1, m1) and t2 is (m1, m2), then t1 @ t2 is (n1, m2)
     so grad3 is (n1, m2)
@@ -555,27 +554,49 @@ def matmul(t1: Tensor, t2: Tensor) -> Tensor:
 
     if t1.requires_grad:
         def grad_fn1(grad: np.ndarray, _) -> np.ndarray:
-            grad = grad @ np.swapaxes(t2.data, -1, -2)
-            ndims_added = grad.ndim - t1.data.ndim
+            data_t1 = t1.data
+            data_t2 = t2.data
+            if t1.dim() == 1:
+                data_t1 = np.expand_dims(data_t1, 0)
+                grad = np.expand_dims(grad, -2)
+            if t2.dim() == 1:
+                data_t2 = np.expand_dims(data_t2, -1)
+                grad = np.expand_dims(grad, -1)
+            data_t2 = np.swapaxes(data_t2, -1, -2)
+            grad_t1 = grad @ data_t2
+            ndims_added = grad_t1.ndim - t1.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(axis=0)
+                grad_t1 = grad_t1.sum(axis=0)
             for i, dim in enumerate(t1.shape):
                 if dim == 1:
-                    grad = grad.sum(axis=i, keepdims=True)
-            return grad
+                    grad_t1 = grad_t1.sum(axis=i, keepdims=True)
+            assert grad_t1.shape == t1.shape
+            return grad_t1
 
         dependencies.append(Dependency(t1, grad_fn1, meta={"name": "matmul_lhs"}))
 
     if t2.requires_grad:
         def grad_fn2(grad: np.ndarray, _) -> np.ndarray:
-            grad = np.swapaxes(t1.data, -1, -2) @ grad
-            ndims_added = grad.ndim - t2.data.ndim
+            data_t1 = t1.data
+            data_t2 = t2.data
+            if t1.dim() == 1:
+                data_t1 = np.expand_dims(data_t1, 0)
+                grad = np.expand_dims(grad, -2)
+            if t2.dim() == 1:
+                data_t2 = np.expand_dims(data_t2, -1)
+                grad = np.expand_dims(grad, -1)
+            data_t1 = np.swapaxes(data_t1, -1, -2)
+            grad_t2 = data_t1 @ grad
+            if t2.dim() == 1:
+                grad_t2 = np.squeeze(grad_t2, axis=-1)
+            ndims_added = grad_t2.ndim - t2.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(axis=0)
+                grad_t2 = grad_t2.sum(axis=0)
             for i, dim in enumerate(t2.shape):
                 if dim == 1:
-                    grad = grad.sum(axis=i, keepdims=True)
-            return grad
+                    grad_t2 = grad_t2.sum(axis=i, keepdims=True)
+            assert grad_t2.shape == t2.shape
+            return grad_t2
 
         dependencies.append(Dependency(t2, grad_fn2, meta={"name": "matmul_rhs"}))
 
