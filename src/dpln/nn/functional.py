@@ -1,6 +1,6 @@
-from ..autograd.tensor import Tensor, pad, concat
+from ..autograd.tensor import Tensor, pad
 from ..autograd import function as AF
-from .utils import im2col2d, str2pad2d
+from . import utils as U
 
 import math
 import numpy as np
@@ -41,7 +41,7 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
     :return: Tensor shape(bs, ch_o, h_o, w_o)
     """
     assert x.dim() == 4
-    bs, _, h_i, w_i = x.shape
+    bs, ch_i, h_i, w_i = x.shape
     ch_o, ch_i_g, h_k, w_k = weight.shape
     assert bias.dim() == 1
 
@@ -76,7 +76,7 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
         else:
             raise ValueError(pad_err_msg)
     elif type(padding) == str:
-        padding = str2pad2d(padding, x.shape, weight.shape, stride)
+        padding = U.str2pad2d(padding, x.shape, weight.shape, stride)
     else:
         raise ValueError(pad_err_msg)
 
@@ -88,26 +88,19 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
     else:
         raise ValueError(dia_err_msg)
 
-    assert ch_o % groups == 0
-    ch_i = ch_i_g * groups
+    # make sure groups
+    assert ch_i % groups == 0 and ch_o % groups == 0
+    ch_o_g = ch_o // groups
 
     h_o = math.floor((h_i + padding[0][0] + padding[0][1] - dilation[0] * (h_k - 1) - 1) / stride[0] + 1)
     w_o = math.floor((w_i + padding[1][0] + padding[1][1] - dilation[1] * (w_k - 1) - 1) / stride[1] + 1)
 
-    pad_inp = padding2d(x, padding, padding_mode)
-    col = im2col2d(pad_inp, weight.shape, stride, dilation)
-    col = col.reshape(bs, h_o * w_o, groups, ch_i_g * w_k * h_k)  # (bs, h_o*w_o, groups, ch_i_g, w_k*h_k)
-    g = []
-    ch_o_g = ch_o // groups
-    for i in range(groups):
-        a_w = weight[i * ch_o_g:(i + 1) * ch_o_g, :, :, :]
-        a_w = a_w.reshape(ch_o_g, ch_i_g * h_k * w_k)
-        a_x = col[:, :, i, :]
-        a_x = a_x.transpose(1, 2)
-        a = (a_w @ a_x)
-        g.append(a)
-
-    ret = concat(g, dim=1)
+    pad_x = padding2d(x, padding, padding_mode)
+    col_x = U.im2col2d(pad_x, weight.shape, stride, dilation)
+    col_x = col_x.reshape(bs, h_o * w_o, groups, ch_i_g * h_k * w_k)
+    col_w = weight.reshape(groups, ch_o_g, ch_i_g * h_k * w_k)
+    col_x = col_x.permute((0, 2, 3, 1))  # (bs, groups, ch_i_g*h_k*w_k, h_o*w_o)
+    ret = col_w @ col_x
     ret = ret.reshape(bs, ch_o, h_o, w_o)
     if bias is None:
         return ret
@@ -166,6 +159,7 @@ def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
                dilation: Union[Tuple, List, int] = 1,
                padding_mode: str = 'zeros') -> Tensor:
     assert x.dim() == 4
+
     bs, ch_i, h_i, w_i = x.shape
     if type(kernel_size) == int:
         kernel_size = (ch_i, ch_i, kernel_size, kernel_size)
@@ -175,7 +169,7 @@ def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
 
     stride_err_msg = "value of `stride` must be tuple of 2 or int"
     if stride is None:
-        stride = kernel_size
+        stride = (kernel_size[2], kernel_size[3])
     elif type(stride) == int:
         stride = (stride, stride)
     elif type(stride) in [tuple, list]:
@@ -220,7 +214,7 @@ def max_pool2d(x: Tensor, kernel_size: Union[Tuple, List, int],
     w_o = math.floor((w_i + padding[1][0] + padding[1][1] - dilation[1] * (w_k - 1) - 1) / stride[1] + 1)
 
     pad_inp = padding2d(x, padding, padding_mode)
-    col = im2col2d(pad_inp, kernel_size, stride, dilation)
+    col = U.im2col2d(pad_inp, kernel_size, stride, dilation)
     a = AF.max(col, dim=-1).reshape(bs, h_o, w_o, ch_i)
     return a.permute(dims=(0, 3, 1, 2))
 

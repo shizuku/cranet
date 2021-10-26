@@ -257,7 +257,7 @@ def _slice(t: Tensor, idxs) -> Tensor:
 
 def concat(tensors: Sequence[Tensor], dim: int = 0) -> Tensor:
     assert len(tensors) > 0
-    dim = tensors[0].dim()
+    i_dim = tensors[0].dim()
     data = np.concatenate([t.data for t in tensors], axis=dim)
     requires_grad = True in [t.requires_grad for t in tensors]
     dependencies: List[Dependency] = []
@@ -268,7 +268,7 @@ def concat(tensors: Sequence[Tensor], dim: int = 0) -> Tensor:
         b += tensors[i].shape[dim]
         if t.requires_grad:
             def grad_fn(grad: np.ndarray, meta) -> np.ndarray:
-                idx = tuple([np.s_[meta["a"]:meta["b"]] if j == dim else np.s_[:] for j in range(dim)])
+                idx = tuple([np.s_[meta["a"]:meta["b"]] if j == dim else np.s_[:] for j in range(i_dim)])
                 return grad[idx]
 
             dependencies.append(Dependency(t, grad_fn, meta={"name": "concat", "id": i, "a": a, "b": b}))
@@ -549,7 +549,7 @@ def matmul(t1: Tensor, t2: Tensor) -> Tensor:
         grad1 = grad3 @ t2.T
         grad2 = t1.T @ grad3
     """
-    data = t1.data @ t2.data
+    data = np.matmul(t1.data, t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
 
@@ -558,10 +558,10 @@ def matmul(t1: Tensor, t2: Tensor) -> Tensor:
             grad = grad @ np.swapaxes(t2.data, -1, -2)
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t1.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t1, grad_fn1, meta={"name": "matmul_lhs"}))
@@ -571,10 +571,10 @@ def matmul(t1: Tensor, t2: Tensor) -> Tensor:
             grad = np.swapaxes(t1.data, -1, -2) @ grad
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t2.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t2, grad_fn2, meta={"name": "matmul_rhs"}))
