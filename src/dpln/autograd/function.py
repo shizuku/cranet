@@ -4,6 +4,7 @@ from .tensor import Tensor, Dependency
 from . import utils as U
 
 import numpy as np
+from numba import jit
 
 import math
 from typing import (
@@ -128,26 +129,22 @@ def dropout(x: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
 def conv2d(x: Tensor, weight: Tensor,
            bias: Optional[Tensor] = None,
            stride: Union[Tuple, List, int] = 1,
-           padding: Union[Tuple, List, int, str] = 0,
            dilation: Union[Tuple, List, int] = 1,
-           groups: int = 1,
-           padding_mode: str = 'zeros') -> Tensor:
+           groups: int = 1) -> Tensor:
     """
 
     :param x: (bs, ch_i, h_i, w_i)
     :param weight: (ch_o, ch_i_g, h_k, w_k)
     :param bias: (ch_o)
     :param stride: -> (int, int)
-    :param padding: -> ((int, int), (int, int))
     :param dilation: -> (int, int)
     :param groups: int
-    :param padding_mode: 'zeros'
     :return (bs, ch_o, h_o, w_o)
     """
-    assert x.ndim == 4
+    assert x.dim() == 4
     bs, ch_i, h_i, w_i = x.shape
     ch_o, ch_i_g, h_k, w_k = weight.shape
-    assert bias is None or bias.ndim == 1
+    assert bias is None or bias.dim() == 1
 
     # make sure stride is (int, int)
     stride_err_msg = "value of `stride` must be tuple of 2 or int"
@@ -157,33 +154,6 @@ def conv2d(x: Tensor, weight: Tensor,
         assert len(stride) == 2, stride_err_msg
     else:
         raise ValueError(stride_err_msg)
-
-    # make sure padding is ((int, int), (int,int))
-    pad_err_msg = "value of `padding` must be tuple or list of 2, 2x2 or 4 or int"
-    if type(padding) == int:
-        padding = ((padding, padding), (padding, padding))
-    elif type(padding) in [tuple, list]:
-        if len(padding) == 2:
-            if type(padding[0]) == int:
-                padding = ((padding[0], padding[0]), padding[1])
-            elif type(padding[0]) in [tuple, list]:
-                assert len(padding[0]) == 2, pad_err_msg
-            else:
-                raise ValueError(pad_err_msg)
-            if type(padding[1]) == int:
-                padding = (padding[0], (padding[1], padding[1]))
-            elif type(padding[1]) in [tuple, list]:
-                assert len(padding[1]) == 2, pad_err_msg
-            else:
-                raise ValueError(pad_err_msg)
-        elif len(padding) == 4:
-            padding = ((padding[0], padding[1]), (padding[2], padding[3]))
-        else:
-            raise ValueError(pad_err_msg)
-    elif type(padding) == str:
-        padding = U.str2pad2d(padding, x.shape, weight.shape, stride)
-    else:
-        raise ValueError(pad_err_msg)
 
     # make sure dilation
     dia_err_msg = "value of `dilation` must be tuple of 2 or int"
@@ -198,19 +168,17 @@ def conv2d(x: Tensor, weight: Tensor,
     assert ch_i % groups == 0 and ch_o % groups == 0
     ch_o_g = ch_o // groups
 
-    h_o = math.floor((h_i + padding[0][0] + padding[0][1] - dilation[0] * (h_k - 1) - 1)
-                     / stride[0] + 1)
-    w_o = math.floor((w_i + padding[1][0] + padding[1][1] - dilation[1] * (w_k - 1) - 1)
-                     / stride[1] + 1)
+    h_o = math.floor((h_i - dilation[0] * (h_k - 1) - 1) / stride[0] + 1)
+    w_o = math.floor((w_i - dilation[1] * (w_k - 1) - 1) / stride[1] + 1)
 
-    x_pad = U.padding2d(x.data, padding, padding_mode)
-    col_x = U.im2col2d(x_pad, weight.shape, stride, dilation)
-    col_x = col_x.reshape(bs, h_o * w_o, groups, ch_i_g * h_k * w_k)
-    col_w = weight.reshape(groups, ch_o_g, ch_i_g * h_k * w_k)
-    data = np.matmul(col_w.data, col_x, axes=[(1, 2), (3, 1), (2, 3)])
-    data = data.reshape(bs, ch_o, h_o, w_o)
+    x_col = U.im2col2d(x.data, weight.shape, stride, dilation)
+    x_col = x_col.reshape((bs, h_o * w_o, groups, ch_i_g * h_k * w_k))
+    w_col = weight.data.reshape((groups, ch_o_g, ch_i_g * h_k * w_k))
+
+    data = np.matmul(w_col, x_col, axes=[(1, 2), (3, 1), (2, 3)])
+    data = data.reshape((bs, ch_o, h_o, w_o))
     if bias is not None:
-        data + bias.reshape(1, ch_o, 1, 1)
+        data += bias.data.reshape((1, ch_o, 1, 1))
 
     bias_requires_grad = bias is not None and bias.requires_grad
     requires_grad = x.requires_grad or weight.requires_grad or bias_requires_grad
@@ -218,29 +186,48 @@ def conv2d(x: Tensor, weight: Tensor,
 
     if x.requires_grad:
         def grad_fn_x(grad: np.ndarray, _) -> np.ndarray:
-            grad = np.transpose(grad, axes=(0, 2, 3, 1)).reshape(-1, ch_o)
-            dcol = np.dot(grad, col_w.T)
-            grad_x = U.col2img(dcol, x.shape, h_k, w_k, stride, padding)
+            w_rot = U.rot180_2d(weight.data)  # ch_o, ch_i_g, h_k, w_k
+            w_rot = w_rot.transpose((1, 0, 2, 3))  # ch_i_g, ch_o, h_k, w_k
+            w_rot_col = w_rot.reshape((ch_i_g, groups, ch_o_g * h_k * w_k))
+            grad_p_s = U.pad_stride(grad, w_rot.shape, stride)
+            grad_col = U.im2col2d(grad_p_s, w_rot.shape, stride=(1, 1), dilation=dilation)
+            grad_col = grad_col.reshape((bs, h_i * w_i, groups, ch_o_g * h_k * w_k))
+            # ch_i_g, groups, ch_o_g * h_k * w_k
+            # bs, h_i * w_i, groups, ch_o_g * h_k * w_k
+            grad_x = np.matmul(w_rot_col, grad_col, axes=[(0, 2), (3, 1), (2, 3)])
+            grad_x = grad_x.reshape((bs, ch_i, h_i, w_i))
+            assert grad_x.shape == x.shape
             return grad_x
 
         dependencies.append(Dependency(x, grad_fn_x, meta={"name": "conv2d_x"}))
 
     if weight.requires_grad:
         def grad_fn_w(grad: np.ndarray, _) -> np.ndarray:
-            grad = np.transpose(grad, axes=(0, 2, 3, 1)).reshape(-1, ch_o)
-            grad_w = np.dot(col_x.T, grad) / bs
-            grad_w = np.transpose(grad_w, axes=(1, 0)).reshape(ch_o, ch_i, h_k, w_k)
+            grad_p_s = U.unstride(grad, stride)
+            _, _, h_o_p, w_o_p = grad_p_s.shape
+            x_col_w = U.im2col2d(x.data, grad_p_s.shape, stride=(1, 1), dilation=dilation)  # bs, h_k*w_k, ch_i, h_o*w_o
+            x_col_w = x_col_w.reshape((bs, h_k * w_k, groups, ch_i_g, h_o * w_o))
+            x_col_w = x_col_w.transpose((3, 2, 1, 0, 4))  # ch_i_g, g, h_k*w_k, bs, h_o*w_o
+            x_col_w = x_col_w.reshape((ch_i_g, groups, h_k * w_k, bs * h_o * w_o))
+            grad_col = grad_p_s.transpose((1, 0, 2, 3))  # ch_o, bs, h_o, w_o
+            grad_col = grad_col.reshape((groups, ch_o_g, bs * h_o_p * w_o_p))
+            grad_w = np.matmul(grad_col, x_col_w, axes=[(1, 2), (3, 2), (2, 3)])  # ch_i_g, g, ch_o_g, h_k*w_k
+            grad_w = grad_w.transpose((1, 2, 0, 3))  # g, ch_o_g, ch_i_g, h_k*w_k
+            grad_w = grad_w.reshape((ch_o, ch_i_g, h_k, w_k))
+            assert grad_w.shape == weight.shape  # (ch_o, ch_i_g, h_k, w_k)
             return grad_w
 
-        dependencies.append(Dependency(x, grad_fn_w, meta={"name": "conv2d_w"}))
+        dependencies.append(Dependency(weight, grad_fn_w, meta={"name": "conv2d_weight"}))
 
     if bias_requires_grad:
         def grad_fn_b(grad: np.ndarray, _) -> np.ndarray:
-            grad = np.transpose(grad, axes=(0, 2, 3, 1)).reshape(-1, ch_o)
-            grad_b = np.sum(grad, axis=0, keepdims=True).T / bs
+            grad = grad.reshape((bs, ch_o, h_o * w_o))
+            grad_b = np.sum(grad, axis=2)
+            grad_b = np.sum(grad_b, axis=0)
+            assert grad_b.shape == bias.shape
             return grad_b
 
-        dependencies.append(Dependency(x, grad_fn_b, meta={"name": "conv2d_b"}))
+        dependencies.append(Dependency(bias, grad_fn_b, meta={"name": "conv2d_bias"}))
 
     return Tensor(data, requires_grad, dependencies)
 

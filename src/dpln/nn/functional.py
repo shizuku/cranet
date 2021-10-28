@@ -90,21 +90,10 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
 
     # make sure groups
     assert ch_i % groups == 0 and ch_o % groups == 0
-    ch_o_g = ch_o // groups
 
-    h_o = math.floor((h_i + padding[0][0] + padding[0][1] - dilation[0] * (h_k - 1) - 1) / stride[0] + 1)
-    w_o = math.floor((w_i + padding[1][0] + padding[1][1] - dilation[1] * (w_k - 1) - 1) / stride[1] + 1)
+    x_pad = padding2d(x, padding, padding_mode)
 
-    pad_x = padding2d(x, padding, padding_mode)
-    col_x = U.im2col2d(pad_x, weight.shape, stride, dilation)
-    col_x = col_x.reshape(bs, h_o * w_o, groups, ch_i_g * h_k * w_k)
-    col_w = weight.reshape(groups, ch_o_g, ch_i_g * h_k * w_k)
-    col_x = col_x.permute((0, 2, 3, 1))  # (bs, groups, ch_i_g*h_k*w_k, h_o*w_o)
-    ret = col_w @ col_x
-    ret = ret.reshape(bs, ch_o, h_o, w_o)
-    if bias is None:
-        return ret
-    return ret + bias.reshape(1, ch_o, 1, 1)
+    return AF.conv2d(x_pad, weight, bias, stride=stride, dilation=dilation, groups=groups)
 
 
 def padding2d(x: Tensor, padding: Union[Tuple, List, int], mode: str) -> Tensor:
