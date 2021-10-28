@@ -1,3 +1,5 @@
+from dpln.data import Dataset
+
 from pathlib import Path
 from .utils import string_classes
 from typing import (
@@ -8,7 +10,7 @@ from typing import (
 )
 
 
-class VisionDataset:
+class VisionDataset(Dataset):
     _repr_indent: int = 4
 
     def __init__(
@@ -48,4 +50,3 @@ class VisionDataset:
 
     def extra_repr(self) -> str:
         return ""
-

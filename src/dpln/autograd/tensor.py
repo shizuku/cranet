@@ -67,6 +67,14 @@ class Tensor:
     def numpy(self) -> np.ndarray:
         return self.data
 
+    def item(self):
+        if self.shape == ():
+            return self.data
+        elif self.shape == (1,):
+            return self.data[0]
+        else:
+            raise RuntimeError('must be one element')
+
     def zero_grad(self) -> None:
         self.grad = Tensor(np.zeros_like(self.data))
 
