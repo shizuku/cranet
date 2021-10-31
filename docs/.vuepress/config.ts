@@ -3,9 +3,9 @@ import type { DefaultThemeOptions } from "vuepress";
 
 export default defineUserConfig<DefaultThemeOptions>({
   lang: "en-US",
-  title: "dpln",
+  title: "cranet",
   description: "A tiny library for Deep Learning",
-  base: "/dpln/",
+  base: "/cranet/",
   themeConfig: {},
   bundler: "@vuepress/bundler-vite",
   markdown: {

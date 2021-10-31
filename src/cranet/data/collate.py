@@ -1,16 +1,16 @@
-import dpln
+import cranet
 from collections import Sequence, Mapping
 
 
 def default_collate_fn(batch):
     elm = batch[0]
     elm_type = type(elm)
-    if isinstance(elm, dpln.Tensor):
-        return dpln.stack(batch, 0)
+    if isinstance(elm, cranet.Tensor):
+        return cranet.stack(batch, 0)
     elif isinstance(elm, float):
-        return dpln.tensor(batch, dtype=dpln.float64)
+        return cranet.tensor(batch, dtype=cranet.float64)
     elif isinstance(elm, int):
-        return dpln.tensor(batch)
+        return cranet.tensor(batch)
     elif isinstance(elm, str):
         return
     elif isinstance(elm, Mapping):

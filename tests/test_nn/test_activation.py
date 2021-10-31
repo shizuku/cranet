@@ -6,9 +6,9 @@ import numpy as np
 import torch
 
 from torch.nn import functional as torch_F
-from src.dpln.nn import functional as dpln_F
+from src.cranet.nn import functional as cranet_F
 
-from src import dpln
+from src import cranet
 
 from ..utils import np_feq
 
@@ -18,12 +18,12 @@ class TestRelu(unittest.TestCase):
         for _ in range(100):
             shape = [4]
             a = np.random.uniform(-1, 1, shape)
-            a0 = dpln.Tensor(a, requires_grad=True)
+            a0 = cranet.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
-            c0 = dpln_F.relu(a0)
+            c0 = cranet_F.relu(a0)
             c1 = torch_F.relu(a1)
             delta = np.random.uniform(-1, 1, shape)
-            delta0 = dpln.Tensor(delta)
+            delta0 = cranet.Tensor(delta)
             delta1 = torch.tensor(delta)
             c0.zero_grad()
             c0.backward(delta0)
@@ -35,12 +35,12 @@ class TestRelu(unittest.TestCase):
         for _ in range(100):
             shape = (2, 2)
             a = np.random.uniform(-1, 1, shape)
-            a0 = dpln.Tensor(a, requires_grad=True)
+            a0 = cranet.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
-            c0 = dpln_F.relu(a0)
+            c0 = cranet_F.relu(a0)
             c1 = torch_F.relu(a1)
             delta = np.random.uniform(-1, 1, shape)
-            delta0 = dpln.Tensor(delta)
+            delta0 = cranet.Tensor(delta)
             delta1 = torch.tensor(delta)
             c0.zero_grad()
             c0.backward(delta0)
@@ -52,12 +52,12 @@ class TestRelu(unittest.TestCase):
         for _ in range(100):
             shape = (2, 3, 4, 5, 7, 9)
             a = np.random.uniform(-1, 1, shape)
-            a0 = dpln.Tensor(a, requires_grad=True)
+            a0 = cranet.Tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
-            c0 = dpln_F.relu(a0)
+            c0 = cranet_F.relu(a0)
             c1 = torch_F.relu(a1)
             delta = np.random.uniform(-1, 1, shape)
-            delta0 = dpln.Tensor(delta)
+            delta0 = cranet.Tensor(delta)
             delta1 = torch.tensor(delta)
             c0.zero_grad()
             c0.backward(delta0)

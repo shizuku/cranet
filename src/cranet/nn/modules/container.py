@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dpln import Tensor
+from cranet import Tensor
 
 from .module import Module
 

@@ -1,4 +1,4 @@
-from dpln import Tensor
+from cranet import Tensor
 
 from typing import TypeVar, Generic, Tuple, Iterator
 

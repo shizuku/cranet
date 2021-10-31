@@ -1,5 +1,5 @@
 # TODO: impl Hebb
-from dpln.nn.modules import Module
+from cranet.nn.modules import Module
 from .optimizer import Optimizer
 from ..nn.parameter import Parameter
 

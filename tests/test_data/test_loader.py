@@ -1,5 +1,5 @@
-import dpln
-from dpln.data import Dataset, DataLoader
+import cranet
+from cranet.data import Dataset, DataLoader
 
 import numpy as np
 
@@ -11,7 +11,7 @@ class TestDataset(Dataset):
     def __getitem__(self, item):
         img = np.random.rand(1, 28, 28)
         lab = np.random.randint(0, 10)
-        return dpln.as_tensor(img), dpln.as_tensor(lab)
+        return cranet.as_tensor(img), cranet.as_tensor(lab)
 
 
 train_ds = TestDataset()

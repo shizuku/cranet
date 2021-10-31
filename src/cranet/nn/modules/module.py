@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dpln import Tensor
+from cranet import Tensor
 
 from ..parameter import Parameter
 
@@ -62,7 +62,7 @@ class Module:
         if param is None:
             self._parameters[name] = None
         elif not isinstance(param, Parameter):
-            raise TypeError("dpln.nn.Parameter or None required")
+            raise TypeError("cranet.nn.Parameter or None required")
         else:
             self._parameters[name] = param
 

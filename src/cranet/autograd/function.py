@@ -4,7 +4,6 @@ from .tensor import Tensor, Dependency
 from . import utils as U
 
 import numpy as np
-from numba import jit
 
 import math
 from typing import (

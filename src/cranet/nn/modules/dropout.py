@@ -1,4 +1,4 @@
-from dpln import Tensor
+from cranet import Tensor
 
 from .module import Module
 from .. import functional as F

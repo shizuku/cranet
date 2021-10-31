@@ -2,7 +2,7 @@ from abc import ABC
 
 from .module import Module
 from .. import functional as F
-from dpln import Tensor
+from cranet import Tensor
 
 from typing import (
     Optional,

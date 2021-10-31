@@ -1,16 +1,16 @@
 # 要添加一个新单元，输入 '# %%'
 # 要添加一个新的标记单元，输入 '# %% [markdown]'
 # %%
-import dpln
-from dpln import nn, optim
-from dpln.nn import functional as F
-from dpln.data import Dataset, DataLoader
+import cranet
+from cranet import nn, optim
+from cranet.nn import functional as F
+from cranet.data import Dataset, DataLoader
 
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
 
-dpln.__version__
+cranet.__version__
 
 # %%
 train_mat = loadmat('train_32x32.mat')
@@ -40,12 +40,12 @@ class SvhnDataset(Dataset):
 # %%
 def transform(img: np.ndarray):
     img = img.transpose((2, 0, 1)).astype(np.float32)
-    return dpln.Tensor(img)
+    return cranet.Tensor(img)
 
 
 def transform_target(lab: np.ndarray):
     lab = lab.squeeze().astype(np.int64)-1
-    return dpln.Tensor([lab])
+    return cranet.Tensor([lab])
 
 
 train_ds = SvhnDataset(train_mat, transform=transform,
@@ -54,8 +54,8 @@ train_ds = SvhnDataset(train_mat, transform=transform,
 
 # %%
 def batch_fn(p):
-    rx = dpln.concat([i[0].reshape(1, 3, 32, 32) for i in p], dim=0)
-    ry = dpln.concat([i[1].reshape(1) for i in p], dim=0)
+    rx = cranet.concat([i[0].reshape(1, 3, 32, 32) for i in p], dim=0)
+    ry = cranet.concat([i[1].reshape(1) for i in p], dim=0)
     return rx, ry
 
 

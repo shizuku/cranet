@@ -1,6 +1,6 @@
 import unittest
 
-from src.dpln.data import SequentialSampler, BatchSampler, RandomSampler
+from src.cranet.data import SequentialSampler, BatchSampler, RandomSampler
 import numpy as np
 
 
