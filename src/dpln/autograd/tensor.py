@@ -226,6 +226,21 @@ class Tensor:
         return hash(str(self.data.data))
 
 
+def tensor(data: Arrayable, requires_grad: bool = False, dtype=None) -> Tensor:
+    if type(data).__module__ == np.__name__:
+        return Tensor(data.copy(), requires_grad=requires_grad)
+    return Tensor(data, requires_grad=requires_grad)
+
+
+def as_tensor(data: Arrayable, requires_grad: bool = False) -> Tensor:
+    return Tensor(data, requires_grad=requires_grad)
+
+
+def stack(tensors: List[Tensor], dim: int = 0) -> Tensor:
+    tensors = [unsqueeze(i, dim) for i in tensors]
+    return concat(tensors, dim)
+
+
 def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
     return Tensor(np.zeros(shape=shape, dtype=dtype, order=order), requires_grad=requires_grad)
 
@@ -281,6 +296,20 @@ def concat(tensors: Sequence[Tensor], dim: int = 0) -> Tensor:
 
             dependencies.append(Dependency(t, grad_fn, meta={"name": "concat", "id": i, "a": a, "b": b}))
         a += tensors[i].shape[dim]
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def unsqueeze(x: Tensor, dim: int) -> Tensor:
+    data = np.expand_dims(x.data, axis=dim)
+    requires_grad = x.requires_grad
+    dependencies = []
+
+    if x.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            return grad.reshape(x.shape)
+
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "unsqueeze"}))
 
     return Tensor(data, requires_grad, dependencies)
 

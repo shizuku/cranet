@@ -762,6 +762,13 @@ class TestTensorPad(unittest.TestCase):
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
 
 
+class TestUnsqueeze(unittest.TestCase):
+    def test_unsqueeze_0(self):
+        ts = [dpln.zeros((3, 4)) for _ in range(100)]
+        z = dpln.stack(ts)
+        print(z.shape)
+
+
 if __name__ == '__main__':
     sys.path.append(os.getcwd())
     unittest.main()
