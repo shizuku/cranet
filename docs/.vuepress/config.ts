@@ -3,7 +3,7 @@ import type { DefaultThemeOptions } from "vuepress";
 
 export default defineUserConfig<DefaultThemeOptions>({
   lang: "en-US",
-  title: "cranet",
+  title: "CraNet",
   description: "A tiny library for Deep Learning",
   base: "/cranet/",
   themeConfig: {},
