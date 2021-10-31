@@ -1,0 +1,1 @@
+const e={key:"v-8daa1a0e",path:"/",title:"CraNet",lang:"en-US",frontmatter:{},excerpt:"",headers:[],filePathRelative:"README.md",git:{updatedTime:1635688561e3,contributors:[{name:"shizuku",email:"2112165916@qq.com",commits:4}]}};export{e as data};
