@@ -1,3 +1,3 @@
 # cranet
 
-A tiny library for deep learning using `numpy`.
+A tiny library for Deep Learning using `numpy`.
