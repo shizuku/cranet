@@ -13,6 +13,57 @@ from src import cranet
 from ..utils import teq
 
 
+class TestL1Loss(unittest.TestCase):
+    def test_l1_0(self):
+        for _ in range(100):
+            x = np.random.rand(64, 10)
+            y = np.random.rand(64, 10)
+            x_d = cranet.Tensor(x, requires_grad=True)
+            x_t = torch.tensor(x, requires_grad=True)
+            y_d = cranet.Tensor(y, requires_grad=True)
+            y_t = torch.tensor(y, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='mean')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='mean')
+            l_t.backward()
+            l_d.backward()
+            self.assertTrue(teq(l_d, l_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
+
+    def test_l1_1(self):
+        for _ in range(100):
+            x = np.random.rand(64, 10)
+            y = np.random.rand(64, 10)
+            x_d = cranet.Tensor(x, requires_grad=True)
+            x_t = torch.tensor(x, requires_grad=True)
+            y_d = cranet.Tensor(y, requires_grad=True)
+            y_t = torch.tensor(y, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='sum')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='sum')
+            l_t.backward()
+            l_d.backward()
+            self.assertTrue(teq(l_d, l_t, 2e-13))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
+
+    def test_l1_2(self):
+        for _ in range(100):
+            a = np.random.rand(64, 10)
+            b = np.random.rand(64, 10)
+            x_d = cranet.Tensor(a, requires_grad=True)
+            x_t = torch.tensor(a, requires_grad=True)
+            y_d = cranet.Tensor(b, requires_grad=True)
+            y_t = torch.tensor(b, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='none')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='none')
+            g = np.random.rand(64, 10)
+            l_t.backward(torch.tensor(g))
+            l_d.backward(cranet.Tensor(g))
+            self.assertTrue(teq(y_d, y_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
+
+
 class TestMSELoss(unittest.TestCase):
     def test_mse_0(self):
         for _ in range(100):

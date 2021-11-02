@@ -466,7 +466,6 @@ def mean(t: Tensor, dim: Optional[Shapable] = None,
 
 def var(x: Tensor, dim: Optional[Shapable] = None,
         unbiased: bool = True, keepdim: bool = False) -> Tensor:
-    # TODO: impl unbiased
     z = (x - x.mean(dim=dim, keepdim=True)) ** 2
     s = z.sum(dim=dim, keepdim=keepdim)
     if dim is None:
