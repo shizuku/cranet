@@ -11,10 +11,11 @@ from src.cranet.nn import functional as cranet_F
 
 from src import cranet
 
-from ..utils import np_feq
+from ..utils import teq
 
 
 class TestConv2d(unittest.TestCase):
+    # TODO: FIX ERROR
     def test_conv2d_1(self):
         for _ in range(100):
             w = np.random.rand(1, 1, 3, 3)
@@ -28,15 +29,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, padding=1)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, padding=1)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(1, 1, 7, 7)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_2(self):
         time_t = 0
@@ -64,10 +65,10 @@ class TestConv2d(unittest.TestCase):
             y_d.backward(grad_d)
             end_d = time.time()
             time_d += end_d - beg_d
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-8))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-8))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
         print("torch", time_t)
         print("cranet", time_d)
 
@@ -84,15 +85,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, padding=1)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, padding=1)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.detach().numpy(), 2e-10))
+            self.assertTrue(teq(y_t, y_d, 2e-10))
             grad = np.random.rand(2, 64, 16, 16)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_3(self):
         for _ in range(100):
@@ -107,15 +108,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=2, padding=4)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=2, padding=4)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(2, 8, 33, 18)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_4(self):
         for _ in range(100):
@@ -130,15 +131,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=[2, 1], padding=(5, 6))
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=[2, 1], padding=(5, 6))
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(2, 8, 34, 36)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_5(self):
         for _ in range(10):
@@ -153,15 +154,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=(2, 4), padding=(9, 1))
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=(2, 4), padding=(9, 1))
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(2, 8, 38, 7)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_6(self):
         for _ in range(10):
@@ -176,15 +177,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=(2, 2), padding=1, dilation=2)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=(2, 2), padding=1, dilation=2)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(2, 8, 15, 15)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_7(self):
         for _ in range(10):
@@ -199,15 +200,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=(2, 2), padding=1, dilation=2)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=(2, 2), padding=1, dilation=2)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(2, 8, 17, 13)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_8(self):
         for _ in range(100):
@@ -222,15 +223,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=1, padding=1, groups=2)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=1, padding=1, groups=2)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(1, 8, 7, 7)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
     def test_conv2d_9(self):
         for _ in range(1000):
@@ -245,15 +246,15 @@ class TestConv2d(unittest.TestCase):
             x_d = cranet.Tensor(x, requires_grad=True)
             y_t = torch_F.conv2d(x_t, w_t, b_t, stride=2, padding=1, groups=2)
             y_d = cranet_F.conv2d(x_d, w_d, b_d, stride=2, padding=1, groups=2)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_d.numpy(), 2e-13))
+            self.assertTrue(teq(y_t, y_d, 2e-13))
             grad = np.random.rand(1, 16, 16, 16)
             grad_t = torch.tensor(grad)
             grad_d = cranet.Tensor(grad)
             y_t.backward(grad_t)
             y_d.backward(grad_d)
-            self.assertTrue(np_feq(w_t.grad.detach().numpy(), w_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b_t.grad.detach().numpy(), b_d.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_d.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(w_t.grad, w_d.grad, 2e-10))
+            self.assertTrue(teq(b_t.grad, b_d.grad, 2e-10))
+            self.assertTrue(teq(x_t.grad, x_d.grad, 2e-10))
 
 
 if __name__ == '__main__':

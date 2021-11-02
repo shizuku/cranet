@@ -10,7 +10,7 @@ from src.cranet.nn import functional as cranet_F
 
 from src import cranet
 
-from ..utils import np_feq
+from ..utils import teq
 
 
 class TestDropout(unittest.TestCase):
@@ -33,11 +33,11 @@ class TestMaxPool2d(unittest.TestCase):
         a_t = torch.tensor(a, requires_grad=True)
         b_t = torch_F.max_pool2d(a_t, 2, 2)
         b_d = cranet_F.max_pool2d(a_d, 2, 2)
-        self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+        self.assertTrue(teq(b_d, b_t))
         g = np.random.rand(5, 3, 4, 4)
         b_t.backward(torch.tensor(g))
         b_d.backward(cranet.Tensor(g))
-        self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+        self.assertTrue(teq(a_d.grad, a_t.grad))
 
     def test_max_pool_1(self):
         a = np.random.rand(5, 3, 32, 32)
@@ -45,11 +45,11 @@ class TestMaxPool2d(unittest.TestCase):
         a_t = torch.tensor(a, requires_grad=True)
         b_t = torch_F.max_pool2d(a_t, 2, 2)
         b_d = cranet_F.max_pool2d(a_d, 2, 2)
-        self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+        self.assertTrue(teq(b_d, b_t))
         g = np.random.rand(5, 3, 16, 16)
         b_t.backward(torch.tensor(g))
         b_d.backward(cranet.Tensor(g))
-        self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+        self.assertTrue(teq(a_d.grad, a_t.grad))
 
 
 class TestFlatten(unittest.TestCase):

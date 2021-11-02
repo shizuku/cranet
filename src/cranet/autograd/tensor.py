@@ -32,6 +32,8 @@ def ensure_data(tensorable: Tensorable, dtype=None) -> np.ndarray:
         data = tensorable.data
         return data.astype(dtype)
     if isinstance(tensorable, np.ndarray):
+        if dtype is None:
+            return tensorable
         return tensorable.astype(dtype)
     else:
         return np.array(tensorable, dtype=dtype)

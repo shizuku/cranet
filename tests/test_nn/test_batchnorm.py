@@ -12,10 +12,10 @@ from src.cranet.nn import functional as c_F
 from src.cranet import nn as c_nn
 
 import numpy as np
-from ..utils import np_feq
+from ..utils import teq
 
 
-class TestConv2d(unittest.TestCase):
+class TestBatchNorm2d(unittest.TestCase):
     def test_batch_norm_0(self):
         for _ in range(100):
             x = np.random.rand(1, 3, 4, 4)
@@ -35,16 +35,16 @@ class TestConv2d(unittest.TestCase):
             x_var_t = torch.tensor(x_var)
             y_t = t_F.batch_norm(x_t, x_mean_t, x_var_t, w_t, b_t, training=False, momentum=0, eps=1e-5)
             y_c = c_F.batch_norm(x_c, x_mean_c, x_var_c, w_c, b_c, training=False, momentum=0, eps=1e-5)
-            self.assertTrue(np_feq(y_c.detach().numpy(), y_t.detach().numpy(), 1e-15))
+            self.assertTrue(teq(y_c, y_t, 1e-15))
             g = np.random.rand(1, 3, 4, 4)
             g_t = torch.tensor(g)
             g_c = cranet.tensor(g)
             y_t.backward(g_t)
             y_c.zero_grad()
             y_c.backward(g_c)
-            self.assertTrue(np_feq(x_c.grad.detach().numpy(), x_t.grad.detach().numpy(), 1e-15))
-            self.assertTrue(np_feq(w_c.grad.detach().numpy(), w_t.grad.detach().numpy(), 1e-10))
-            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-10))
+            self.assertTrue(teq(x_c.grad, x_t.grad, 1e-15))
+            self.assertTrue(teq(w_c.grad, w_t.grad, 1e-10))
+            self.assertTrue(teq(b_c.grad, b_t.grad, 1e-10))
 
     def test_batch_norm_1(self):
         for _ in range(100):
@@ -65,16 +65,16 @@ class TestConv2d(unittest.TestCase):
             x_var_t = torch.tensor(x_var)
             y_t = t_F.batch_norm(x_t, x_mean_t, x_var_t, w_t, b_t, training=False, momentum=0.1, eps=1e-5)
             y_c = c_F.batch_norm(x_c, x_mean_c, x_var_c, w_c, b_c, training=False, momentum=0.1, eps=1e-5)
-            self.assertTrue(np_feq(y_c.detach().numpy(), y_t.detach().numpy(), 1e-15))
+            self.assertTrue(teq(y_c, y_t, 1e-15))
             g = np.random.rand(1, 3, 4, 4)
             g_t = torch.tensor(g)
             g_c = cranet.tensor(g)
             y_t.backward(g_t)
             y_c.zero_grad()
             y_c.backward(g_c)
-            self.assertTrue(np_feq(x_c.grad.detach().numpy(), x_t.grad.detach().numpy(), 1e-15))
-            self.assertTrue(np_feq(w_c.grad.detach().numpy(), w_t.grad.detach().numpy(), 1e-10))
-            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-10))
+            self.assertTrue(teq(x_c.grad, x_t.grad, 1e-15))
+            self.assertTrue(teq(w_c.grad, w_t.grad, 1e-10))
+            self.assertTrue(teq(b_c.grad, b_t.grad, 1e-10))
 
     def test_batch_norm_2(self):
         for _ in range(100):
@@ -95,16 +95,16 @@ class TestConv2d(unittest.TestCase):
             x_var_t = torch.tensor(x_var)
             y_t = t_F.batch_norm(x_t, x_mean_t, x_var_t, w_t, b_t, training=True, momentum=0, eps=1e-5)
             y_c = c_F.batch_norm(x_c, x_mean_c, x_var_c, w_c, b_c, training=True, momentum=0, eps=1e-5)
-            self.assertTrue(np_feq(y_c.detach().numpy(), y_t.detach().numpy(), 1e-13))
+            self.assertTrue(teq(y_c, y_t, 1e-13))
             g = np.random.rand(1, 3, 4, 4)
             g_t = torch.tensor(g)
             g_c = cranet.tensor(g)
             y_t.backward(g_t)
             y_c.zero_grad()
             y_c.backward(g_c)
-            self.assertTrue(np_feq(x_c.grad.detach().numpy(), x_t.grad.detach().numpy(), 1e-10))
-            self.assertTrue(np_feq(w_c.grad.detach().numpy(), w_t.grad.detach().numpy(), 1e-10))
-            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-10))
+            self.assertTrue(teq(x_c.grad, x_t.grad, 1e-10))
+            self.assertTrue(teq(w_c.grad, w_t.grad, 1e-10))
+            self.assertTrue(teq(b_c.grad, b_t.grad, 1e-10))
 
     def test_batch_norm_3(self):
         back_c_time = 0
@@ -127,7 +127,7 @@ class TestConv2d(unittest.TestCase):
             x_var_t = torch.tensor(x_var)
             y_t = t_F.batch_norm(x_t, x_mean_t, x_var_t, w_t, b_t, training=True, momentum=0.1, eps=1e-5)
             y_c = c_F.batch_norm(x_c, x_mean_c, x_var_c, w_c, b_c, training=True, momentum=0.1, eps=1e-5)
-            self.assertTrue(np_feq(y_c.detach().numpy(), y_t.detach().numpy(), 1e-10))
+            self.assertTrue(teq(y_c, y_t, 1e-10))
             g = np.random.rand(64, 3, 32, 32)
             g_t = torch.tensor(g)
             g_c = cranet.tensor(g)
@@ -139,9 +139,9 @@ class TestConv2d(unittest.TestCase):
             y_c.backward(g_c)
             c_2 = time.time()
             back_c_time += c_2 - c_1
-            self.assertTrue(np_feq(x_c.grad.detach().numpy(), x_t.grad.detach().numpy(), 1e-10))
-            self.assertTrue(np_feq(w_c.grad.detach().numpy(), w_t.grad.detach().numpy(), 1e-5))
-            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-5))
+            self.assertTrue(teq(x_c.grad, x_t.grad, 1e-10))
+            self.assertTrue(teq(w_c.grad, w_t.grad, 1e-5))
+            self.assertTrue(teq(b_c.grad, b_t.grad, 1e-5))
         print(back_t_time, back_c_time)
 
     def test_batch_norm_4(self):
@@ -159,13 +159,13 @@ class TestConv2d(unittest.TestCase):
             op_c.zero_grad()
             y_t = m_t(x_t)
             y_c = m_c(x_c)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_c.detach().numpy(), 1e-8))
+            self.assertTrue(teq(y_t, y_c, 1e-8))
             g = np.random.rand(64, 3, 32, 32).astype(np.float64)
             y_t.backward(torch.tensor(g))
             y_c.backward(cranet.tensor(g))
             op_t.step()
             op_c.step()
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_c.grad.detach().numpy(), 1e-8))
+            self.assertTrue(teq(x_t.grad, x_c.grad, 1e-8))
 
     def test_batch_norm_5(self):
         m_t = t_nn.BatchNorm2d(3, momentum=0.1, dtype=torch.float64)
@@ -182,13 +182,13 @@ class TestConv2d(unittest.TestCase):
             op_c.zero_grad()
             y_t = m_t(x_t)
             y_c = m_c(x_c)
-            self.assertTrue(np_feq(y_t.detach().numpy(), y_c.detach().numpy(), 1e-8))
+            self.assertTrue(teq(y_t, y_c, 1e-8))
             g = np.random.rand(64, 3, 32, 32).astype(np.float64)
             y_t.backward(torch.tensor(g))
             y_c.backward(cranet.tensor(g))
             op_t.step()
             op_c.step()
-            self.assertTrue(np_feq(x_t.grad.detach().numpy(), x_c.grad.detach().numpy(), 1e-8))
+            self.assertTrue(teq(x_t.grad, x_c.grad, 1e-8))
 
 
 if __name__ == '__main__':

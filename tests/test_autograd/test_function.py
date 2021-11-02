@@ -7,7 +7,7 @@ import torch
 
 from src import cranet
 
-from ..utils import np_feq
+from ..utils import teq
 
 
 class TestAbs(unittest.TestCase):
@@ -26,8 +26,8 @@ class TestAbs(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
     def test_abs_1(self):
         for _ in range(100):
@@ -44,8 +44,8 @@ class TestAbs(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
     def test_abs_2(self):
         for _ in range(100):
@@ -62,8 +62,8 @@ class TestAbs(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestMax(unittest.TestCase):
@@ -74,10 +74,10 @@ class TestMax(unittest.TestCase):
             a_t = torch.tensor(a, requires_grad=True)
             b_d = cranet.max(a_d)
             b_t = torch.max(a_t)
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             b_t.backward()
             b_d.backward()
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
     def test_max_1(self):
         for _ in range(100):
@@ -86,11 +86,11 @@ class TestMax(unittest.TestCase):
             a_t = torch.tensor(a, requires_grad=True)
             b_d = cranet.max(a_d)
             b_t = torch.max(a_t)
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand()
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy(), 2e-7))
+            self.assertTrue(teq(a_d.grad, a_t.grad, 2e-7))
 
     def test_max_5(self):
         for _ in range(100):
@@ -100,11 +100,11 @@ class TestMax(unittest.TestCase):
             axis = np.random.randint(0, 5)
             b_d = cranet.max(a_d, dim=axis)
             b_t = torch.max(a_t, dim=axis).values
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand(*b_d.shape)
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
     def test_max_6(self):
         for _ in range(100):
@@ -114,11 +114,11 @@ class TestMax(unittest.TestCase):
             axis = np.random.randint(0, 5)
             b_d = cranet.max(a_d, dim=axis, keepdim=True)
             b_t = torch.max(a_t, dim=axis, keepdim=True).values
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand(*b_d.shape)
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
 
 class TestMin(unittest.TestCase):
@@ -129,10 +129,10 @@ class TestMin(unittest.TestCase):
             a_t = torch.tensor(a, requires_grad=True)
             b_d = cranet.min(a_d)
             b_t = torch.min(a_t)
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             b_t.backward()
             b_d.backward()
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
     def test_min_1(self):
         for _ in range(100):
@@ -141,11 +141,11 @@ class TestMin(unittest.TestCase):
             a_t = torch.tensor(a, requires_grad=True)
             b_d = cranet.min(a_d)
             b_t = torch.min(a_t)
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand()
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy(), 2e-7))
+            self.assertTrue(teq(a_d.grad, a_t.grad, 2e-7))
 
     def test_min_5(self):
         for _ in range(100):
@@ -155,11 +155,11 @@ class TestMin(unittest.TestCase):
             axis = np.random.randint(0, 5)
             b_d = cranet.min(a_d, dim=axis)
             b_t = torch.min(a_t, dim=axis).values
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand(*b_d.shape)
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
     def test_min_6(self):
         for _ in range(100):
@@ -169,11 +169,11 @@ class TestMin(unittest.TestCase):
             axis = np.random.randint(0, 5)
             b_d = cranet.min(a_d, dim=axis, keepdim=True)
             b_t = torch.min(a_t, dim=axis, keepdim=True).values
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand(*b_d.shape)
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.detach().numpy()))
+            self.assertTrue(teq(a_d.grad, a_t.grad))
 
 
 class TestLog(unittest.TestCase):
@@ -184,10 +184,11 @@ class TestLog(unittest.TestCase):
             b0 = cranet.log(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.log(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()), f"{b0},{b1}")
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
+            self.assertTrue(teq(b0, b1), f"{b0},{b1}")
+            g = np.random.rand(3)
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue((a0.grad, a1.grad, 1e-15))
 
     def test_log_1(self):
         for _ in range(100):
@@ -196,10 +197,11 @@ class TestLog(unittest.TestCase):
             b0 = cranet.log(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.log(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()), f"{b0},{b1}")
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue((a0.grad.numpy() == a1.grad.detach().numpy()).all())
+            self.assertTrue(teq(b0, b1), f"{b0},{b1}")
+            g = np.random.rand(3, 4, 5)
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue((a0.grad, a1.grad), 1e-15)
 
 
 class TestExp(unittest.TestCase):
@@ -210,10 +212,11 @@ class TestExp(unittest.TestCase):
             b0 = cranet.exp(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.exp(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(8)
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
     def test_exp_1(self):
         for _ in range(100):
@@ -222,10 +225,11 @@ class TestExp(unittest.TestCase):
             b0 = cranet.exp(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.exp(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(3, 4, 5)
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestRelu(unittest.TestCase):
@@ -236,10 +240,11 @@ class TestRelu(unittest.TestCase):
             b0 = cranet.relu(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.relu(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(cranet.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(13, 10)
+            b1.backward(torch.tensor(g))
+            b0.backward(cranet.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestSigmoid(unittest.TestCase):
@@ -250,24 +255,26 @@ class TestSigmoid(unittest.TestCase):
             b0 = cranet.sigmoid(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.sigmoid(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(cranet.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(13, 10)
+            b1.backward(torch.tensor(g))
+            b0.backward(cranet.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestSoftmax(unittest.TestCase):
     def test_softmax(self):
         for _ in range(100):
-            a = np.random.rand(13, 10)
+            a = np.random.rand(64, 10)
             a0 = cranet.Tensor(a, requires_grad=True)
             b0 = cranet.softmax(a0, dim=-1)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.softmax(a1, dim=-1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(cranet.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(64, 10)
+            b1.backward(torch.tensor(g))
+            b0.backward(cranet.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestTanh(unittest.TestCase):
@@ -278,10 +285,11 @@ class TestTanh(unittest.TestCase):
             b0 = cranet.tanh(a0)
             a1 = torch.tensor(a, requires_grad=True)
             b1 = torch.tanh(a1)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy()))
-            b1.backward(torch.ones_like(b1) * 0.1)
-            b0.backward(cranet.ones_like(b0) * 0.1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(b0, b1))
+            g = np.random.rand(13, 10)
+            b1.backward(torch.tensor(g))
+            b0.backward(cranet.tensor(g))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 class TestFlatten(unittest.TestCase):
@@ -292,13 +300,13 @@ class TestFlatten(unittest.TestCase):
             a_t = torch.tensor(a, requires_grad=True)
             b_d = cranet.flatten(a_d)
             b_t = torch.flatten(a_t)
-            self.assertTrue(np_feq(b_d.numpy(), b_t.detach().numpy()))
+            self.assertTrue(teq(b_d, b_t))
             g = np.random.rand(2 * 2 * 2)
             g_d = cranet.Tensor(g)
             g_t = torch.tensor(g)
             b_d.backward(g_d)
             b_t.backward(g_t)
-            self.assertTrue(np_feq(a_d.numpy(), a_t.detach().numpy()))
+            self.assertTrue(teq(a_d, a_t))
 
 
 if __name__ == '__main__':
