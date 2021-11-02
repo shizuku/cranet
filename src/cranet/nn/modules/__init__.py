@@ -4,6 +4,9 @@ from .activation import (
     Tanh,
     Softmax,
 )
+from .batchnorm import (
+    BatchNorm2d
+)
 from .container import (
     Sequential
 )

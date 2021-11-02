@@ -19,7 +19,10 @@ from collections import OrderedDict
 
 
 class Module:
+    training: bool
+
     def __init__(self):
+        self.training = True
         self._parameters: Dict[str, Optional[Parameter]] = OrderedDict()
         self._buffers: Dict[str, Optional[Tensor]] = OrderedDict()
         self._non_persistent_buffers_set: Set[str] = set()
@@ -226,6 +229,15 @@ class Module:
     def parameters(self, recurse: bool = True) -> Iterator[Parameter]:
         for name, param in self.named_parameters(recurse=recurse):
             yield param
+
+    def train(self, mode: bool = True):
+        self.training = mode
+        for m in self.children():
+            m.train(mode)
+        return self
+
+    def eval(self):
+        return self.train(False)
 
     def __repr__(self) -> str:
         return self.__class__.__name__
