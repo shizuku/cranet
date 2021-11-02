@@ -8,15 +8,22 @@ from .random import (
 from .tensor import (
     Tensor,
     tensor, as_tensor, stack,
-    zeros, zeros_like, ones, ones_like,
+    empty, zeros, zeros_like, ones, ones_like,
     add, sub, neg, mul, truediv, matmul, power, dot,
-    sum, mean,
+    sum, mean, var,
     transpose, permute, concat, reshape, flatten, pad
 )
 import numpy as np
 
+bool = np.bool_
 uint8 = np.uint8
+int8 = np.int8
+int16 = np.int16
 int32 = np.int32
 int64 = np.int64
+long = np.int32
+float16 = np.float16
 float32 = np.float32
 float64 = np.float64
+complex64 = np.complex64
+complex128 = np.complex128

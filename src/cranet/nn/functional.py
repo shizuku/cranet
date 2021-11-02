@@ -96,6 +96,32 @@ def conv2d(x: Tensor, weight: Tensor, bias: Optional[Tensor] = None,
     return AF.conv2d(x_pad, weight, bias, stride=stride, dilation=dilation, groups=groups)
 
 
+def batch_norm(
+        x: Tensor,
+        running_mean: Optional[Tensor],
+        running_var: Optional[Tensor],
+        weight: Optional[Tensor] = None,
+        bias: Optional[Tensor] = None,
+        training: bool = False,
+        momentum: float = 0.1,
+        eps: float = 1e-5,
+) -> Tensor:
+    _, ch, _, _ = x.shape
+    if training:
+        b_mean = x.mean(dim=(0, 2, 3), keepdim=True)
+        b_var = x.var(dim=(0, 2, 3), keepdim=True, unbiased=False)
+        y = (x - b_mean) / AF.sqrt(b_var + eps)
+    else:
+        assert running_mean is not None
+        assert running_var is not None
+        running_mean = running_mean.reshape(1, ch, 1, 1)
+        running_var = running_var.reshape(1, ch, 1, 1)
+        y = (x - running_mean) / AF.sqrt(running_var + eps)
+    if weight is not None and bias is not None:
+        y = y * weight.reshape(1, ch, 1, 1) + bias.reshape(1, ch, 1, 1)
+    return y
+
+
 def padding2d(x: Tensor, padding: Union[Tuple, List, int], mode: str) -> Tensor:
     """
 

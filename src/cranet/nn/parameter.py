@@ -1,4 +1,4 @@
-from ..autograd.tensor import Tensor, Arrayable, Dependency
+from ..autograd.tensor import Tensor, Tensorable, Dependency
 
 from typing import (
     List,
@@ -6,8 +6,8 @@ from typing import (
 
 
 class Parameter(Tensor):
-    def __init__(self, data: Arrayable = None, requires_grad: bool = True, dependencies: List[Dependency] = None):
-        super().__init__(data, requires_grad, dependencies)
+    def __init__(self, data: Tensorable, requires_grad: bool = True, dependencies: List[Dependency] = None, dtype=None):
+        super().__init__(data, requires_grad, dependencies, dtype=dtype)
 
     def __repr__(self):
         return "Parameter containing:\n" + super().__repr__()

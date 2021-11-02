@@ -17,123 +17,206 @@ class TestTensorSum(unittest.TestCase):
     def test_sum_0(self):
         for _ in range(100):
             a = np.random.rand(100)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
-            b0 = a0.sum()
-            b1 = a1.sum()
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13))
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            a_c = cranet.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = a_c.sum()
+            b_t = a_t.sum()
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand()
+            b_c.backward(cranet.tensor(g))
+            b_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-5))
 
     def test_sum_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
-            b0 = a0.sum()
-            b1 = a1.sum()
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
-            # print(np.random.rand().shape)
-            delta = np.random.randn()
-            delta0 = cranet.Tensor(delta, requires_grad=True)
-            delta1 = torch.tensor(delta, requires_grad=True)
-            b0.backward(delta0)
-            b1.backward(delta1)
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-13))
+            a_c = cranet.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = a_c.sum()
+            b_t = a_t.sum()
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.randn()
+            g_c = cranet.Tensor(g)
+            g_t = torch.tensor(g)
+            b_c.backward(g_c)
+            b_t.backward(g_t)
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
 
     def test_sum_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
+            a_c = cranet.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(len(a.shape))
-            b0 = a0.sum(axis)
-            b1 = a1.sum(axis)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"cranet:\n{b0.numpy().shape}\ntorch:{b1.detach().numpy().shape}")
-            delta = np.random.randn(*b0.shape)
-            delta0 = cranet.Tensor(delta, requires_grad=True)
-            delta1 = torch.tensor(delta, requires_grad=True)
-            b0.backward(delta0)
-            b1.backward(delta1)
-
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            b_c = a_c.sum(axis)
+            b_t = a_t.sum(axis)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.randn(*b_c.shape)
+            g_c = cranet.tensor(g)
+            g_t = torch.tensor(g)
+            b_c.backward(g_c)
+            b_t.backward(g_t)
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
 
     def test_sum_3(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6, 7, 8)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
             axis = (0, 1, 3)
-            b0 = a0.sum(axis)
-            b1 = a1.sum(axis)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"cranet:\n{b0.numpy().shape}\ntorch:{b1.detach().numpy().shape}")
-            b1.backward(torch.ones_like(b1))
-            b0.backward(cranet.ones_like(b0))
+            b_c = a_c.sum(axis)
+            b_t = a_t.sum(axis)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand(5, 7, 8)
+            b_t.backward(torch.tensor(g))
+            b_c.backward(cranet.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy()))
 
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+    def test_sum_4(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = (0, 1, 3)
+            b_c = cranet.sum(a_c, dim=axis, keepdim=True)
+            b_t = torch.sum(a_t, dim=axis, keepdim=True)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand(1, 1, 5, 1, 7, 8)
+            b_t.backward(torch.tensor(g))
+            b_c.backward(cranet.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy()))
 
 
 class TestTensorMean(unittest.TestCase):
     def test_mean_0(self):
         for _ in range(100):
             a = np.random.rand(100)
-            a0 = cranet.Tensor(a, requires_grad=True)
+            a0 = cranet.tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
             b0 = a0.mean()
             b1 = a1.mean()
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ncranet:{b0.numpy()}\ntorch:{b1.detach().numpy()}")
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 1e-13))
+            g = np.random.rand()
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a0.grad.detach().numpy(), a1.grad.detach().numpy(), 1e-5))
 
     def test_mean_1(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6)
-            a0 = cranet.Tensor(a, requires_grad=True)
+            a0 = cranet.tensor(a, requires_grad=True)
             a1 = torch.tensor(a, requires_grad=True)
             b0 = a0.mean()
             b1 = a1.mean()
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"{b0.numpy()}\n{b1.detach().numpy()}")
-            b0.backward(cranet.ones_like(b0))
-            b1.backward(torch.ones_like(b1))
-
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 1e-13))
+            g = np.random.rand()
+            b0.backward(cranet.tensor(g))
+            b1.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a0.grad.detach().numpy(), a1.grad.detach().numpy(), 1e-5))
 
     def test_mean_2(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 2, 1, 3)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
             axis = np.random.randint(len(a.shape))
-            b0 = a0.mean(axis)
-            b1 = a1.mean(axis)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ncranet:\n{b0.numpy()}\ntorch:{b1.detach().numpy()}")
-            delta = np.random.randn(*b0.shape)
-            delta0 = cranet.Tensor(delta, requires_grad=True)
-            delta1 = torch.tensor(delta, requires_grad=True)
-            b0.backward(delta0)
-            b1.backward(delta1)
-
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            b_c = a_c.mean(axis)
+            b_t = a_t.mean(axis)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.randn(*b_c.shape)
+            g_c = cranet.tensor(g)
+            g_t = torch.tensor(g)
+            b_c.backward(g_c)
+            b_t.backward(g_t)
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-5))
 
     def test_mean_3(self):
         for _ in range(100):
             a = np.random.rand(3, 4, 5, 6, 7, 8)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
+            a_c = cranet.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
             axis = (0, 1, 4)
-            b0 = a0.mean(axis)
-            b1 = a1.mean(axis)
-            self.assertTrue(np_feq(b0.numpy(), b1.detach().numpy(), 2e-13), f"\ncranet:\n{b0.numpy()}\ntorch:{b1.detach().numpy()}")
-            delta = np.random.randn(*b0.shape)
-            delta0 = cranet.Tensor(delta, requires_grad=True)
-            delta1 = torch.tensor(delta, requires_grad=True)
-            b0.backward(delta0)
-            b1.backward(delta1)
+            b_c = a_c.mean(axis)
+            b_t = a_t.mean(axis)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.randn(*b_c.shape)
+            g_c = cranet.tensor(g)
+            g_t = torch.tensor(g)
+            b_c.backward(g_c)
+            b_t.backward(g_t)
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-5))
 
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+    def test_mean_4(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a_c = cranet.Tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            axis = (0, 1, 4)
+            b_c = a_c.mean(axis, keepdim=True)
+            b_t = a_t.mean(axis, keepdim=True)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.randn(*b_c.shape)
+            g_c = cranet.tensor(g)
+            g_t = torch.tensor(g)
+            b_c.backward(g_c)
+            b_t.backward(g_t)
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-5))
+
+
+class TestTensorVar(unittest.TestCase):
+    def test_var_0(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = cranet.var(a_c, unbiased=False)
+            b_t = torch.var(a_t, unbiased=False)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand()
+            b_c.backward(cranet.tensor(g))
+            b_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
+
+    def test_var_1(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = cranet.var(a_c, dim=2, unbiased=False)
+            b_t = torch.var(a_t, dim=2, unbiased=False)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand(3, 4, 6)
+            b_c.backward(cranet.tensor(g))
+            b_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
+
+    def test_var_2(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            dim = (2, 3, 1)
+            b_c = cranet.var(a_c, dim=dim, unbiased=False)
+            b_t = torch.var(a_t, dim=dim, unbiased=False)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand(*b_c.shape)
+            b_c.backward(cranet.tensor(g))
+            b_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
+
+    def test_var_3(self):
+        for _ in range(100):
+            a = np.random.rand(3, 4, 5, 6, 7, 8)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            dim = (2, 3, 1)
+            b_c = cranet.var(a_c, dim=dim, keepdim=True, unbiased=False)
+            b_t = torch.var(a_t, dim=dim, keepdim=True, unbiased=False)
+            self.assertTrue(np_feq(b_c.numpy(), b_t.detach().numpy(), 1e-13))
+            g = np.random.rand(*b_c.shape)
+            b_c.backward(cranet.tensor(g))
+            b_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-6))
 
 
 class TestTensorAdd(unittest.TestCase):
@@ -141,17 +224,18 @@ class TestTensorAdd(unittest.TestCase):
         for _ in range(100):
             a = np.random.rand(1)
             b = np.random.rand(1)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            a1 = torch.tensor(a, requires_grad=True)
-            b0 = cranet.Tensor(b, requires_grad=True)
-            b1 = torch.tensor(b, requires_grad=True)
-            c0 = a0 + b0
-            c1 = a1 + b1
-            c0.backward(cranet.ones_like(c0))
-            c1.backward(torch.ones_like(c1))
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = cranet.tensor(b, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            c_c = a_c + b_c
+            c_t = a_t + b_t
+            g = np.random.rand(1)
+            c_c.backward(cranet.tensor(g))
+            c_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(c_c.detach().numpy(), c_t.detach().numpy()))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-5))
+            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-5))
 
     def test_add_1(self):
         for _ in range(100):
@@ -266,7 +350,7 @@ class TestTensorMul(unittest.TestCase):
             c1.backward(torch.ones_like(c1))
             self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
             self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-10))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 1e-10))
 
 
 class TestTensorTruediv(unittest.TestCase):
@@ -283,8 +367,8 @@ class TestTensorTruediv(unittest.TestCase):
             c0.backward(cranet.ones_like(c0))
             c1.backward(torch.ones_like(c1))
             self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-10))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 1e-10))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 1e-10))
 
     def test_truediv_1(self):
         for _ in range(100):
@@ -299,9 +383,9 @@ class TestTensorTruediv(unittest.TestCase):
             c0.backward(cranet.ones_like(c0))
             c1.backward(torch.ones_like(c1))
             self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-7),
-                            f"{b0.grad.numpy() - b1.grad.detach().numpy()}{b0.grad.numpy() - b1.grad.detach().numpy() < 2e-7}{np.argmin(b0.grad.numpy() - b1.grad.detach().numpy() < 2e-7)}")
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 1e-10))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 1e-7),
+                            f"{b0.grad.numpy() - b1.grad.detach().numpy()}{b0.grad.numpy() - b1.grad.detach().numpy() < 1e-7}{np.argmin(b0.grad.numpy() - b1.grad.detach().numpy() < 2e-7)}")
 
 
 class TestTensorMatmul(unittest.TestCase):
@@ -309,17 +393,18 @@ class TestTensorMatmul(unittest.TestCase):
         for _ in range(1000):
             a = np.random.rand(8, 10)
             b = np.random.rand(10, 8)
-            a0 = cranet.Tensor(a, requires_grad=True)
-            b0 = cranet.Tensor(b, requires_grad=True)
-            x = a0 @ b0
-            x.backward(cranet.ones_like(x))
-            a1 = torch.tensor(a, requires_grad=True)
-            b1 = torch.tensor(b, requires_grad=True)
-            y = a1 @ b1
-            y.backward(torch.ones_like(y))
-            self.assertTrue(np_feq(x.numpy(), y.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.numpy()))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.numpy()))
+            a_c = cranet.Tensor(a, requires_grad=True)
+            b_c = cranet.Tensor(b, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            y_c = a_c @ b_c
+            y_t = a_t @ b_t
+            g = np.random.rand(8, 8)
+            y_c.backward(cranet.tensor(g))
+            y_t.backward(torch.tensor(g))
+            self.assertTrue(np_feq(y_c.detach().numpy(), y_t.detach().numpy(), 1e-13))
+            self.assertTrue(np_feq(a_c.grad.detach().numpy(), a_t.grad.detach().numpy(), 1e-10))
+            self.assertTrue(np_feq(b_c.grad.detach().numpy(), b_t.grad.detach().numpy(), 1e-10))
 
     def test_matmul_2_1(self):
         for _ in range(1000):
@@ -337,8 +422,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_2_2(self):
         for _ in range(1000):
@@ -356,8 +441,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_3(self):
         for _ in range(1000):
@@ -372,11 +457,11 @@ class TestTensorMatmul(unittest.TestCase):
             g_t = torch.tensor(g)
             y_d = a_d @ b_d
             y_t = a_t @ b_t
-            self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
+            self.assertTrue(np_feq(y_d.detach().numpy(), y_t.detach().numpy(), 1e-13))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_4_1(self):
         for _ in range(1000):
@@ -394,8 +479,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_4_2(self):
         for _ in range(1000):
@@ -413,8 +498,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_5_1(self):
         for _ in range(1000):
@@ -432,8 +517,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
     def test_matmul_5_2(self):
         for _ in range(1000):
@@ -451,8 +536,8 @@ class TestTensorMatmul(unittest.TestCase):
             self.assertTrue(np_feq(y_d.numpy(), y_t.detach().numpy()))
             y_t.backward(g_t)
             y_d.backward(g_d)
-            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 2e-13))
-            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 2e-13))
+            self.assertTrue(np_feq(a_d.grad.numpy(), a_t.grad.numpy(), 1e-13))
+            self.assertTrue(np_feq(b_d.grad.numpy(), b_t.grad.numpy(), 1e-13))
 
 
 class TestTensorPower(unittest.TestCase):
@@ -485,7 +570,7 @@ class TestTensorPower(unittest.TestCase):
             c0.backward(cranet.ones_like(c0))
             c1.backward(torch.ones_like(c1))
             self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 1e-10))
             self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy()))
 
     def test_power_2(self):
@@ -501,8 +586,8 @@ class TestTensorPower(unittest.TestCase):
             c0.backward(cranet.ones_like(c0))
             c1.backward(torch.ones_like(c1))
             self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-11))
-            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 2e-11))
+            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 1e-11))
+            self.assertTrue(np_feq(b0.grad.numpy(), b1.grad.detach().numpy(), 1e-11))
 
 
 class TestTensorTranspose(unittest.TestCase):

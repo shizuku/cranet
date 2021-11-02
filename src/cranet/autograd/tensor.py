@@ -22,30 +22,36 @@ class Dependency(NamedTuple):
     meta: Optional[Dict] = None
 
 
-Shapable = Union[Tuple[int], List[int], int]
+Shapable = Union[Tuple, List, int]
 Arrayable = Union[float, list, np.ndarray]
-Tensorable = Union['Tensor', float, np.ndarray]
+Tensorable = Union['Tensor', np.ndarray, float, int, list]
 
 
-def ensure_array(arrayable: Arrayable) -> np.ndarray:
-    if isinstance(arrayable, np.ndarray):
-        return arrayable
-    else:
-        return np.array(arrayable)
-
-
-def ensure_tensor(tensorable: Tensorable) -> Tensor:
+def ensure_data(tensorable: Tensorable, dtype=None) -> np.ndarray:
     if isinstance(tensorable, Tensor):
+        data = tensorable.data
+        return data.astype(dtype)
+    if isinstance(tensorable, np.ndarray):
+        return tensorable.astype(dtype)
+    else:
+        return np.array(tensorable, dtype=dtype)
+
+
+def ensure_tensor(tensorable: Tensorable, dtype=None) -> Tensor:
+    if isinstance(tensorable, Tensor):
+        if dtype is not None:
+            tensorable.dtype = dtype
         return tensorable
     else:
-        return Tensor(tensorable)
+        return Tensor(tensorable, dtype=dtype)
 
 
 class Tensor:
-    def __init__(self, data: Arrayable,
+    def __init__(self, data: Tensorable,
                  requires_grad: bool = False,
-                 dependencies: List[Dependency] = None) -> None:
-        self._data = ensure_array(data)
+                 dependencies: List[Dependency] = None,
+                 dtype=None) -> None:
+        self._data = ensure_data(data, dtype=dtype)
         self.requires_grad = requires_grad
         self.dependencies = dependencies or []
         self.shape = self.data.shape
@@ -63,6 +69,19 @@ class Tensor:
         self._data = new
         # detach gradient if set new datasets
         self.grad = None
+
+    @property
+    def dtype(self):
+        return self._data.dtype
+
+    @dtype.setter
+    def dtype(self, new):
+        self._data.dtype = new
+
+    def astype(self, dtype) -> Tensor:
+        new_data = self._data.copy()
+        return Tensor(new_data, requires_grad=self.requires_grad,
+                      dependencies=self.dependencies, dtype=dtype)
 
     def numpy(self) -> np.ndarray:
         return self.data
@@ -102,11 +121,14 @@ class Tensor:
         """the product of the self.datasets’s dimensions."""
         return self._data.size
 
-    def sum(self, dim: Optional[Shapable] = None) -> Tensor:
-        return sum(self, dim)
+    def sum(self, dim: Optional[Shapable] = None, keepdim: bool = False) -> Tensor:
+        return sum(self, dim, keepdim=keepdim)
 
-    def mean(self, dim: Optional[Shapable] = None) -> Tensor:
-        return mean(self, dim)
+    def mean(self, dim: Optional[Shapable] = None, keepdim: bool = False) -> Tensor:
+        return mean(self, dim, keepdim=keepdim)
+
+    def var(self, dim: Optional[Shapable] = None, keepdim: bool = False, unbiased: bool = True) -> Tensor:
+        return var(self, dim, keepdim=keepdim, unbiased=unbiased)
 
     def transpose(self, dim1: int, dim2: int) -> Tensor:
         return transpose(self, dim1, dim2)
@@ -204,9 +226,9 @@ class Tensor:
         self.data = self.data @ ensure_tensor(other).data
         return self
 
-    def __pow__(self, e: Tensor) -> Tensor:
+    def __pow__(self, other) -> Tensor:
         """called if `self ** other`"""
-        return power(self, ensure_tensor(e))
+        return power(self, ensure_tensor(other))
 
     def __eq__(self, other: object) -> bool:
         """test if `self == other`"""
@@ -228,12 +250,12 @@ class Tensor:
 
 def tensor(data: Arrayable, requires_grad: bool = False, dtype=None) -> Tensor:
     if type(data).__module__ == np.__name__:
-        return Tensor(data.copy(), requires_grad=requires_grad)
-    return Tensor(data, requires_grad=requires_grad)
+        return Tensor(data.copy(), requires_grad=requires_grad, dtype=dtype)
+    return Tensor(data, requires_grad=requires_grad, dtype=dtype)
 
 
-def as_tensor(data: Arrayable, requires_grad: bool = False) -> Tensor:
-    return Tensor(data, requires_grad=requires_grad)
+def as_tensor(data: Arrayable, requires_grad: bool = False, dtype=None) -> Tensor:
+    return Tensor(data, requires_grad=requires_grad, dtype=dtype)
 
 
 def stack(tensors: List[Tensor], dim: int = 0) -> Tensor:
@@ -241,24 +263,24 @@ def stack(tensors: List[Tensor], dim: int = 0) -> Tensor:
     return concat(tensors, dim)
 
 
-def zeros(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
-    return Tensor(np.zeros(shape=shape, dtype=dtype, order=order), requires_grad=requires_grad)
+def empty(shape, dtype=None, requires_grad=False) -> Tensor:
+    return Tensor(np.empty(shape=shape, dtype=dtype), requires_grad=requires_grad)
 
 
-def zeros_like(a, dtype=None, order='K', subok=True, shape=None, requires_grad=False) -> Tensor:
-    if dtype is None:
-        dtype = a.data.dtype
-    return Tensor(np.zeros_like(a=a, dtype=dtype, order=order, subok=subok, shape=shape), requires_grad=requires_grad)
+def zeros(shape, dtype=None, requires_grad=False) -> Tensor:
+    return Tensor(np.zeros(shape=shape, dtype=dtype), requires_grad=requires_grad)
 
 
-def ones(shape, dtype=None, order='C', requires_grad=False) -> Tensor:
-    return Tensor(np.ones(shape=shape, dtype=dtype, order=order), requires_grad=requires_grad)
+def zeros_like(a: Tensor, dtype=None, shape=None, requires_grad=False) -> Tensor:
+    return Tensor(np.zeros_like(a=a, dtype=dtype, shape=shape), requires_grad=requires_grad)
 
 
-def ones_like(a: Tensor, dtype=None, requires_grad=False) -> Tensor:
-    if dtype is None:
-        dtype = a.data.dtype
-    return Tensor(np.ones_like(a=a, dtype=dtype, shape=a.shape), requires_grad=requires_grad)
+def ones(shape, dtype=None, requires_grad=False) -> Tensor:
+    return Tensor(np.ones(shape=shape, dtype=dtype), requires_grad=requires_grad)
+
+
+def ones_like(a: Tensor, dtype=None, shape=None, requires_grad=False) -> Tensor:
+    return Tensor(np.ones_like(a=a, dtype=dtype, shape=shape), requires_grad=requires_grad)
 
 
 def _slice(t: Tensor, idxs) -> Tensor:
@@ -400,35 +422,59 @@ def diag(t: Tensor, diagonal: int = 0) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def sum(t: Tensor, dim: Optional[Shapable] = None) -> Tensor:
+def sum(x: Tensor, dim: Optional[Shapable] = None,
+        keepdim: bool = False) -> Tensor:
     """
     Takes a tensor and return the sum of its components
     """
-    data = t.data.sum(axis=dim)
-    requires_grad = t.requires_grad
+    # TODO: fix epsilon
+    data = x.data.sum(axis=dim, keepdims=keepdim)
+    requires_grad = x.requires_grad
     dependencies: List[Dependency] = []
 
-    if requires_grad:
-        if dim is None:
+    if x.requires_grad:
+        if dim is None or keepdim:
             def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-                return grad * np.ones_like(t.data)
+                return grad * np.ones_like(x.data)
+        elif type(dim) is int:
+            def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+                grad = np.expand_dims(grad, axis=dim)
+                return grad * np.ones_like(x.data)
         else:
             def grad_fn(grad: np.ndarray, _) -> np.ndarray:
-                return np.expand_dims(grad, axis=dim) * np.ones_like(t.data)
+                for i in sorted(dim):
+                    grad = np.expand_dims(grad, axis=i)
+                return grad * np.ones_like(x.data)
 
-        dependencies.append(Dependency(t, grad_fn, meta={"name": "sum"}))
+        dependencies.append(Dependency(x, grad_fn, meta={"name": "sum"}))
 
     return Tensor(data, requires_grad, dependencies)
 
 
-def mean(t: Tensor, dim: Optional[Shapable] = None) -> Tensor:
-    data = t.sum(dim=dim)
+def mean(t: Tensor, dim: Optional[Shapable] = None,
+         keepdim: bool = False) -> Tensor:
+    data = t.sum(dim=dim, keepdim=keepdim)
     if dim is None:
         numel = t.numel()
     else:
         total_numel = t.numel()
         numel = total_numel // data.numel()
     return data / numel
+
+
+def var(x: Tensor, dim: Optional[Shapable] = None,
+        unbiased: bool = True, keepdim: bool = False) -> Tensor:
+    # TODO: impl unbiased
+    z = (x - x.mean(dim=dim, keepdim=True)) ** 2
+    s = z.sum(dim=dim, keepdim=keepdim)
+    if dim is None:
+        numel = z.numel()
+    else:
+        total_numel = z.numel()
+        numel = total_numel // s.numel()
+    if unbiased:
+        numel -= 1
+    return s / numel
 
 
 def add(t1: Tensor, t2: Tensor) -> Tensor:
@@ -516,10 +562,10 @@ def mul(t1: Tensor, t2: Tensor) -> Tensor:
             grad = grad * t2.data
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t1.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t1, grad_fn1, meta={"name": "mul_lhs"}))
@@ -529,10 +575,10 @@ def mul(t1: Tensor, t2: Tensor) -> Tensor:
             grad = grad * t1.data
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t2.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t2, grad_fn2, meta={"name": "mul_rhs"}))
@@ -551,10 +597,10 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
             grad = np.divide(grad, t2.data)
             ndims_added = grad.ndim - t1.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t1.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t1, grad_fn1, meta={"name": "truediv_lhs"}))
@@ -566,10 +612,10 @@ def truediv(t1: Tensor, t2: Tensor) -> Tensor:
             # grad = np.negative(np.divide(np.multiply(grad, t1.datasets), np.power(t2.datasets, 2)))
             ndims_added = grad.ndim - t2.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(t2.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(t2, grad_fn2, meta={"name": "truediv_rhs"}))
@@ -651,10 +697,10 @@ def power(x: Tensor, e: Tensor) -> Tensor:
             grad = grad * e.data * np.power(x.data, e.data - 1)
             ndims_added = grad.ndim - x.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(x.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(x, grad_fn1, meta={"name": "power_lhs"}))
@@ -664,10 +710,10 @@ def power(x: Tensor, e: Tensor) -> Tensor:
             grad = grad * data * np.log(x.data)
             ndims_added = grad.ndim - e.data.ndim
             for _ in range(ndims_added):
-                grad = grad.sum(dim=0)
+                grad = grad.sum(axis=0)
             for i, dim in enumerate(e.shape):
                 if dim == 1:
-                    grad = grad.sum(dim=i, keepdims=True)
+                    grad = grad.sum(axis=i, keepdims=True)
             return grad
 
         dependencies.append(Dependency(e, grad_fn2, meta={"name": "power_rhs"}))

@@ -79,6 +79,10 @@ def min(x: Tensor, dim=None, keepdim=False) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
+def sqrt(x: Tensor) -> Tensor:
+    return x ** 0.5
+
+
 def log(x: Tensor) -> Tensor:
     data = np.log(x.data)
     requires_grad = x.requires_grad
