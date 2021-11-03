@@ -13,4 +13,4 @@ class Dropout(Module):
         return F.dropout(x, self.p)
 
     def __repr__(self) -> str:
-        return f"Dropout"
+        return f"Dropout(p={self.p})"

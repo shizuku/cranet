@@ -38,18 +38,3 @@ class Sequential(Module):
         else:
             msg = '{cls.__name__} indices must be integer or slice object'
             raise TypeError(msg.format(cls=Sequential))
-
-    def __repr__(self) -> str:
-        # TODO: impl
-        name_idx: Dict[str, int] = {}
-        ss: List[str] = []
-        for (_, i) in self._modules.items():
-            name = i.get_name()
-            if name in name_idx:
-                name_idx[name] += 1
-                name += str(name_idx[name])
-            else:
-                name_idx[name] = 0
-                name += str(0)
-            ss.append(name + "\n")
-        return "Sequential:\n" + "".join(ss)

@@ -14,4 +14,4 @@ class Flatten(Module):
         return F.flatten(x, self.start_dim, self.end_dim)
 
     def __repr__(self) -> str:
-        return f"Flatten"
+        return f"Flatten(start_dim={self.start_dim}, end_dim={self.end_dim})"

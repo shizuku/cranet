@@ -57,4 +57,4 @@ class MaxPool2d(Module):
         return F.max_pool2d(x, self.kernel_size, self.stride, self.padding, self.dilation, self.padding_mode)
 
     def __repr__(self) -> str:
-        return f"MaxPool2d"
+        return f"MaxPool2d(kernel_size={self.kernel_size}, stride={self.stride}, padding={self.padding})"

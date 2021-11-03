@@ -120,3 +120,6 @@ class BatchNorm2d(_BatchNorm):
     def _check_input_dim(self, inp: Tensor):
         if inp.dim() != 4:
             raise ValueError(f'expect 4-dim input, got {inp.dim()}-dim')
+
+    def __repr__(self):
+        return f"BatchNorm2d({self.num_features}, eps={self.eps}, momentum={self.momentum}, affine={self.affine}, track_running_stats={self.track_running_stats})"
