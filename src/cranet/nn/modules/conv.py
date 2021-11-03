@@ -101,4 +101,4 @@ class Conv2d(Module):
                         self.dilation, self.groups, self.padding_mode)
 
     def __repr__(self) -> str:
-        return f"Conv2d"
+        return f"Conv2d({self.in_channels}, {self.out_channels}, kernel_size={self.kernel_size}, stride={self.stride})"

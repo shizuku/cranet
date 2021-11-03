@@ -44,4 +44,4 @@ class Linear(Module):
         return F.linear(x, self.weight, self.bias)
 
     def __repr__(self) -> str:
-        return f"Linear in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"
+        return f"Linear(in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None})"
