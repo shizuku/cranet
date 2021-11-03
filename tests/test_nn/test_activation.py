@@ -10,7 +10,7 @@ from src.cranet.nn import functional as cranet_F
 
 from src import cranet
 
-from ..utils import np_feq
+from ..utils import teq
 
 
 class TestRelu(unittest.TestCase):
@@ -28,8 +28,8 @@ class TestRelu(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
     def test_relu_1(self):
         for _ in range(100):
@@ -45,8 +45,8 @@ class TestRelu(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
     def test_relu_2(self):
         for _ in range(100):
@@ -62,8 +62,8 @@ class TestRelu(unittest.TestCase):
             c0.zero_grad()
             c0.backward(delta0)
             c1.backward(delta1)
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy()))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad))
 
 
 if __name__ == '__main__':

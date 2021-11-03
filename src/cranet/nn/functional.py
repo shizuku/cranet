@@ -267,7 +267,6 @@ def tanh(x: Tensor) -> Tensor:
 # loss
 
 def l1_loss(x: Tensor, y: Tensor, reduction: str = 'mean') -> Tensor:
-    # TODO: test
     L = AF.abs(x - y)
 
     if reduction.lower() == 'mean':

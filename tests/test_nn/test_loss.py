@@ -10,7 +10,58 @@ from src.cranet.nn import functional as cranet_F
 
 from src import cranet
 
-from ..utils import np_feq
+from ..utils import teq
+
+
+class TestL1Loss(unittest.TestCase):
+    def test_l1_0(self):
+        for _ in range(100):
+            x = np.random.rand(64, 10)
+            y = np.random.rand(64, 10)
+            x_d = cranet.Tensor(x, requires_grad=True)
+            x_t = torch.tensor(x, requires_grad=True)
+            y_d = cranet.Tensor(y, requires_grad=True)
+            y_t = torch.tensor(y, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='mean')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='mean')
+            l_t.backward()
+            l_d.backward()
+            self.assertTrue(teq(l_d, l_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
+
+    def test_l1_1(self):
+        for _ in range(100):
+            x = np.random.rand(64, 10)
+            y = np.random.rand(64, 10)
+            x_d = cranet.Tensor(x, requires_grad=True)
+            x_t = torch.tensor(x, requires_grad=True)
+            y_d = cranet.Tensor(y, requires_grad=True)
+            y_t = torch.tensor(y, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='sum')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='sum')
+            l_t.backward()
+            l_d.backward()
+            self.assertTrue(teq(l_d, l_t, 2e-13))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
+
+    def test_l1_2(self):
+        for _ in range(100):
+            a = np.random.rand(64, 10)
+            b = np.random.rand(64, 10)
+            x_d = cranet.Tensor(a, requires_grad=True)
+            x_t = torch.tensor(a, requires_grad=True)
+            y_d = cranet.Tensor(b, requires_grad=True)
+            y_t = torch.tensor(b, requires_grad=True)
+            l_d = cranet_F.l1_loss(x_d, y_d, reduction='none')
+            l_t = torch_F.l1_loss(x_t, y_t, reduction='none')
+            g = np.random.rand(64, 10)
+            l_t.backward(torch.tensor(g))
+            l_d.backward(cranet.Tensor(g))
+            self.assertTrue(teq(y_d, y_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
 
 
 class TestMSELoss(unittest.TestCase):
@@ -26,9 +77,9 @@ class TestMSELoss(unittest.TestCase):
             l_t = torch_F.mse_loss(x_t, y_t, reduction='mean')
             l_t.backward()
             l_d.backward()
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
-            self.assertTrue(np_feq(y_d.grad.detach().numpy(), y_t.grad.detach().numpy()))
+            self.assertTrue(teq(l_d, l_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
 
     def test_mse_1(self):
         for _ in range(100):
@@ -42,9 +93,9 @@ class TestMSELoss(unittest.TestCase):
             l_t = torch_F.mse_loss(x_t, y_t, reduction='sum')
             l_t.backward()
             l_d.backward()
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy(), 2e-13))
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
-            self.assertTrue(np_feq(y_d.grad.detach().numpy(), y_t.grad.detach().numpy()))
+            self.assertTrue(teq(l_d, l_t, 2e-13))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
 
     def test_mse_2(self):
         for _ in range(100):
@@ -59,9 +110,9 @@ class TestMSELoss(unittest.TestCase):
             g = np.random.rand(64, 10)
             l_t.backward(torch.tensor(g))
             l_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(y_d.detach().numpy(), y_t.detach().numpy()))
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
-            self.assertTrue(np_feq(y_d.grad.detach().numpy(), y_t.grad.detach().numpy()))
+            self.assertTrue(teq(y_d, y_t))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
+            self.assertTrue(teq(y_d.grad, y_t.grad))
 
 
 class TestBCELoss(unittest.TestCase):
@@ -78,8 +129,8 @@ class TestBCELoss(unittest.TestCase):
             c0.zero_grad()
             c1.backward()
             c0.backward()
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy()))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-11))
+            self.assertTrue(teq(c0, c1))
+            self.assertTrue(teq(a0.grad, a1.grad, 2e-11))
 
     def test_binary_cross_entropy_1(self):
         for _ in range(1000):
@@ -94,8 +145,8 @@ class TestBCELoss(unittest.TestCase):
             c0.zero_grad()
             c1.backward()
             c0.backward()
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-10))
+            self.assertTrue(teq(c0, c1, 2e-9))
+            self.assertTrue(teq(a0.grad, a1.grad, 2e-10))
 
     def test_binary_cross_entropy_2(self):
         for _ in range(1000):
@@ -110,8 +161,8 @@ class TestBCELoss(unittest.TestCase):
             c0.zero_grad()
             c1.backward()
             c0.backward()
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-9))
+            self.assertTrue(teq(c0, c1, 2e-9))
+            self.assertTrue(teq(a0.grad, a1.grad, 2e-9))
 
     def test_binary_cross_entropy_3(self):
         for _ in range(1000):
@@ -126,8 +177,8 @@ class TestBCELoss(unittest.TestCase):
             c0.zero_grad()
             c1.backward()
             c0.backward()
-            self.assertTrue(np_feq(c0.numpy(), c1.detach().numpy(), 2e-9))
-            self.assertTrue(np_feq(a0.grad.numpy(), a1.grad.detach().numpy(), 2e-9))
+            self.assertTrue(teq(c0, c1, 2e-9))
+            self.assertTrue(teq(a0.grad, a1.grad, 2e-9))
 
 
 class TestCrossEntropyLoss(unittest.TestCase):
@@ -141,10 +192,10 @@ class TestCrossEntropyLoss(unittest.TestCase):
             y_t = torch.tensor(y)
             l_d = cranet_F.cross_entropy(x_d, y_d, reduction='mean')
             l_t = torch_F.cross_entropy(x_t, y_t, reduction='mean')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+            self.assertTrue(teq(l_d, l_t))
             l_t.backward()
             l_d.backward()
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
 
     def test_cross_entropy_1(self):
         for _ in range(100):
@@ -156,10 +207,10 @@ class TestCrossEntropyLoss(unittest.TestCase):
             y_t = torch.tensor(y)
             l_d = cranet_F.cross_entropy(x_d, y_d, reduction='sum')
             l_t = torch_F.cross_entropy(x_t, y_t, reduction='sum')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy(), 2e-13))
+            self.assertTrue(teq(l_d, l_t, 2e-13))
             l_t.backward()
             l_d.backward()
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
 
     def test_cross_entropy_2(self):
         for _ in range(100):
@@ -171,11 +222,11 @@ class TestCrossEntropyLoss(unittest.TestCase):
             y_t = torch.tensor(y)
             l_d = cranet_F.cross_entropy(x_d, y_d, reduction='none')
             l_t = torch_F.cross_entropy(x_t, y_t, reduction='none')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+            self.assertTrue(teq(l_d, l_t))
             g = np.random.rand(64)
             l_t.backward(torch.tensor(g))
             l_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
 
     # def test_cross_entropy_3(self):
     #     for _ in range(100):
@@ -188,10 +239,10 @@ class TestCrossEntropyLoss(unittest.TestCase):
     #         y_t = torch.tensor(y)
     #         l_d = cranet_F.cross_entropy(x_d, y_d, weight=cranet.Tensor(w))
     #         l_t = torch_F.cross_entropy(x_t, y_t, weight=torch.tensor(w))
-    #         self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+    #         self.assertTrue(teq(l_d, l_t))
     #         l_t.backward()
     #         l_d.backward()
-    #         self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+    #         self.assertTrue(teq(x_d.grad, x_t.grad))
 
 
 class TestNLLLoss(unittest.TestCase):
@@ -199,16 +250,16 @@ class TestNLLLoss(unittest.TestCase):
         for _ in range(100):
             x = np.random.rand(64, 10)
             y = np.random.randint(0, 10, [64])
-            x_d = cranet.Tensor(x, requires_grad=True)
-            y_d = cranet.Tensor(y)
+            x_c = cranet.tensor(x, requires_grad=True)
+            y_c = cranet.tensor(y)
             x_t = torch.tensor(x, requires_grad=True)
             y_t = torch.tensor(y)
-            l_d = cranet_F.nll_loss(x_d, y_d, reduction='mean')
+            l_c = cranet_F.nll_loss(x_c, y_c, reduction='mean')
             l_t = torch_F.nll_loss(x_t, y_t, reduction='mean')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+            self.assertTrue(teq(l_c, l_t))
             l_t.backward()
-            l_d.backward()
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            l_c.backward()
+            self.assertTrue(teq(x_c.grad, x_t.grad))
 
     def test_nll_loss_1(self):
         for _ in range(100):
@@ -220,10 +271,10 @@ class TestNLLLoss(unittest.TestCase):
             y_t = torch.tensor(y)
             l_d = cranet_F.nll_loss(x_d, y_d, reduction='sum')
             l_t = torch_F.nll_loss(x_t, y_t, reduction='sum')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy(), 2e-14))
+            self.assertTrue(teq(l_d, l_t, 2e-14))
             l_t.backward()
             l_d.backward()
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
 
     def test_nll_loss_2(self):
         for _ in range(100):
@@ -235,11 +286,11 @@ class TestNLLLoss(unittest.TestCase):
             y_t = torch.tensor(y)
             l_d = cranet_F.nll_loss(x_d, y_d, reduction='none')
             l_t = torch_F.nll_loss(x_t, y_t, reduction='none')
-            self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+            self.assertTrue(teq(l_d, l_t))
             g = np.random.rand(64)
             l_t.backward(torch.tensor(g))
             l_d.backward(cranet.Tensor(g))
-            self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+            self.assertTrue(teq(x_d.grad, x_t.grad))
 
     # def test_nll_loss_3(self):
     #     for _ in range(100):
@@ -252,10 +303,10 @@ class TestNLLLoss(unittest.TestCase):
     #         y_t = torch.tensor(y)
     #         l_d = cranet_F.nll_loss(x_d, y_d, weight=cranet.Tensor(w))
     #         l_t = torch_F.nll_loss(x_t, y_t, weight=torch.tensor(w))
-    #         self.assertTrue(np_feq(l_d.detach().numpy(), l_t.detach().numpy()))
+    #         self.assertTrue(teq(l_d, l_t))
     #         l_t.backward()
     #         l_d.backward()
-    #         self.assertTrue(np_feq(x_d.grad.detach().numpy(), x_t.grad.detach().numpy()))
+    #         self.assertTrue(teq(x_d.grad, x_t.grad))
 
 
 if __name__ == '__main__':

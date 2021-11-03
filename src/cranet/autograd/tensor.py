@@ -32,6 +32,8 @@ def ensure_data(tensorable: Tensorable, dtype=None) -> np.ndarray:
         data = tensorable.data
         return data.astype(dtype)
     if isinstance(tensorable, np.ndarray):
+        if dtype is None:
+            return tensorable
         return tensorable.astype(dtype)
     else:
         return np.array(tensorable, dtype=dtype)
@@ -464,7 +466,6 @@ def mean(t: Tensor, dim: Optional[Shapable] = None,
 
 def var(x: Tensor, dim: Optional[Shapable] = None,
         unbiased: bool = True, keepdim: bool = False) -> Tensor:
-    # TODO: impl unbiased
     z = (x - x.mean(dim=dim, keepdim=True)) ** 2
     s = z.sum(dim=dim, keepdim=keepdim)
     if dim is None:
