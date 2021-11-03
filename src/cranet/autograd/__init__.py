@@ -1,3 +1,12 @@
+from .tensor import (
+    Tensor,
+    tensor, as_tensor, stack,
+    is_grad_enabled, set_grad_enabled,
+    empty, zeros, zeros_like, ones, ones_like,
+    add, sub, neg, mul, truediv, matmul, power, dot,
+    sum, mean, var,
+    transpose, permute, concat, reshape, flatten, pad
+)
 from .function import (
     abs, max, min, log, exp, relu, sigmoid, softmax, tanh,
 )
@@ -5,13 +14,8 @@ from .random import (
     normal, normal_like,
     uniform, uniform_like,
 )
-from .tensor import (
-    Tensor,
-    tensor, as_tensor, stack,
-    empty, zeros, zeros_like, ones, ones_like,
-    add, sub, neg, mul, truediv, matmul, power, dot,
-    sum, mean, var,
-    transpose, permute, concat, reshape, flatten, pad
+from .grad_mode import (
+    no_grad
 )
 import numpy as np
 

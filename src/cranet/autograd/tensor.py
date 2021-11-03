@@ -3,7 +3,7 @@ from __future__ import annotations
 from .utils import invert_permutation
 
 import numpy as np
-
+from threading import local
 from typing import (
     List,
     Tuple,
@@ -14,6 +14,8 @@ from typing import (
     NamedTuple,
     Dict,
 )
+
+tl = local()
 
 
 class Dependency(NamedTuple):
@@ -54,7 +56,7 @@ class Tensor:
                  dependencies: List[Dependency] = None,
                  dtype=None) -> None:
         self._data = ensure_data(data, dtype=dtype)
-        self.requires_grad = requires_grad
+        self.requires_grad = tl.is_grad_enabled and requires_grad
         self.dependencies = dependencies or []
         self.shape = self.data.shape
         self.grad: Optional[Tensor] = None
@@ -248,6 +250,17 @@ class Tensor:
 
     def __hash__(self) -> int:
         return hash(str(self.data.data))
+
+
+tl.is_grad_enabled = True
+
+
+def is_grad_enabled() -> bool:
+    return tl.is_grad_enabled
+
+
+def set_grad_enabled(mode: bool = True):
+    tl.is_grad_enabled = mode
 
 
 def tensor(data: Arrayable, requires_grad: bool = False, dtype=None) -> Tensor:
