@@ -1,8 +1,20 @@
+from itertools import accumulate
+from numpy.random import Generator, default_rng
+
 from cranet import Tensor
 
-from typing import TypeVar, Generic, Tuple, Iterator
+from typing import (
+    List,
+    Tuple,
+    TypeVar,
+    Generic,
+    Iterator,
+    Optional,
+    Sequence,
+)
 
 T_co = TypeVar('T_co', covariant=True)
+T = TypeVar('T')
 
 
 class Dataset(Generic[T_co]):
@@ -18,14 +30,28 @@ class IterableDataset(Dataset[T_co]):
         raise NotImplementedError
 
 
-class TensorDataset(Dataset[Tuple[Tensor, ...]]):
-    tensors: Tuple[Tensor, ...]
+class Subset(Dataset[T_co]):
+    """
+    Subset of a dataset at specified indices.
+    """
+    def __init__(self, dataset: Dataset[T_co], indices: Sequence[int]) -> None:
+        self.dataset = dataset
+        self.indices = indices
 
-    def __init__(self, *tensors: Tensor) -> None:
-        self.tensors = tensors
+    def __getitem__(self, idx):
+        if isinstance(idx, list):
+            return self.dataset[[self.indices[i] for i in idx]]
+        return self.dataset[self.indices[idx]]
 
-    def __len__(self) -> int:
-        pass
+    def __len__(self):
+        return len(self.indices)
 
-    def __getitem__(self, item):
-        pass
+
+def random_split(dataset: Dataset[T], lengths: Sequence[int],
+                 generator: Optional[Generator] = default_rng()) -> List[Subset[T]]:
+    """Randomly split a dataset into non-overlapping new datasets of given lengths."""
+    if sum(lengths) != len(dataset):
+        raise ValueError(f"Illegal partition {lengths} for splitting the dataset")
+    rng = generator
+    indices = rng.permutation(sum(lengths)).tolist()
+    return [Subset(dataset, indices[offset - length: offset]) for offset, length in zip(accumulate(lengths), lengths)]
