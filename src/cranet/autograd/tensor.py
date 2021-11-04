@@ -158,6 +158,9 @@ class Tensor:
     def conj(self) -> Tensor:
         return conj(self)
 
+    def eq(self, other) -> Tensor:
+        return eq(self, other)
+
     @property
     def T(self) -> Tensor:
         return permute(self, list(range(len(self.shape) - 1, -1, -1)))
@@ -795,4 +798,17 @@ def conj(x: Tensor) -> Tensor:
     requires_grad = x.requires_grad
     dependencies: List[Dependency] = []
 
+    return Tensor(data, requires_grad, dependencies)
+
+
+def eq(a: Tensor, b: Tensor, out=None) -> Tensor:
+    data = a.data == b.data
+    requires_grad = False
+    dependencies: List[Dependency] = []
+
+    if out is not None:
+        out.data = data
+        out.requires_grad = requires_grad
+        out.dependencies = dependencies
+        return out
     return Tensor(data, requires_grad, dependencies)
