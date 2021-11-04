@@ -1,17 +1,43 @@
+import cranet
+
 from ..nn.parameter import Parameter
 
 from typing import Iterator
+from collections import defaultdict
+
+
+class _RequiredParameter(object):
+    """Singleton class representing a required parameter for an Optimizer."""
+
+    def __repr__(self):
+        return "<required parameter>"
+
+
+required = _RequiredParameter()
 
 
 class Optimizer:
-    def __init__(self, parameters: Iterator[Parameter], *args, **kwargs) -> None:
-        self.parameters = list(parameters)
+    def __init__(self, params: Iterator[Parameter], defaults) -> None:
+        self.defaults = defaults
+        self.state = defaultdict(dict)
+        self.param_groups = []
+
+        param_groups = list(params)
+        if len(param_groups) == 0:
+            raise ValueError('optimizer got empty parameters')
+        if not isinstance(param_groups[0], dict):
+            param_groups = [{'params': param_groups}]
+
+        for param_group in param_groups:
+            self.add_param_group(param_group)
 
     def zero_grad(self) -> None:
-        for parameter in self.parameters:
-            parameter.zero_grad()
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is not None:
+                    p.zero_grad()
 
-    def step(self, closure) -> None:
+    def step(self, closure):
         r"""Performs a single optimization step (parameter update).
 
         Arguments:
@@ -23,3 +49,30 @@ class Optimizer:
             ``.grad`` field of the parameters.
         """
         raise NotImplementedError
+
+    def add_param_group(self, param_group):
+        assert isinstance(param_group, dict), 'param_group must be dict'
+
+        params = param_group['params']
+        if isinstance(params, cranet.Tensor):
+            param_group['params'] = [params]
+        elif isinstance(params, set):
+            raise TypeError
+        else:
+            param_group['params'] = list(params)
+
+        for param in param_group['params']:
+            if not isinstance(param, cranet.Tensor):
+                raise ValueError('optimizer must optimize Tensor')
+
+        for name, default in self.defaults.items():
+            if default is required and name not in param_group:
+                raise ValueError
+            else:
+                param_group.setdefault(name, default)
+
+        param_set = set()
+        for group in self.param_groups:
+            param_set.update(set(group['params']))
+
+        self.param_groups.append(param_group)

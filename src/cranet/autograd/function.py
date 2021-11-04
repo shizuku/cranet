@@ -52,6 +52,15 @@ def max(x: Tensor, dim=None, keepdim=False) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
+def maximum(a: Tensor, b: Tensor, out=None) -> Tensor:
+    # TODO: impl backward
+    data = np.maximum(a.data, b.data, out=out.data)
+    requires_grad = a.requires_grad or b.requires_grad
+    dependencies = []
+
+    return Tensor(data, requires_grad, dependencies)
+
+
 def min(x: Tensor, dim=None, keepdim=False) -> Tensor:
     # TODO: fix epsilon
     data = np.amin(x.data, axis=dim, keepdims=keepdim)

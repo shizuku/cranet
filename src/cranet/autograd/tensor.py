@@ -103,7 +103,10 @@ class Tensor:
 
     def backward(self, grad: Optional[Tensor] = None) -> None:
         assert self.requires_grad, "called backward on a non-requires-grad tensor"
-        assert self.grad is not None, "must call zero_grad before backward"
+        # assert self.grad is not None, "must call zero_grad before backward"
+
+        if self.grad is None:
+            self.zero_grad()
 
         if grad is None:
             if self.shape == ():
@@ -151,6 +154,9 @@ class Tensor:
 
     def index_select(self, dim: int, index) -> Tensor:
         return index_select(self, dim, index)
+
+    def conj(self) -> Tensor:
+        return conj(self)
 
     @property
     def T(self) -> Tensor:
@@ -287,6 +293,10 @@ def zeros(shape, dtype=None, requires_grad=False) -> Tensor:
 
 
 def zeros_like(a: Tensor, dtype=None, shape=None, requires_grad=False) -> Tensor:
+    if dtype is None:
+        dtype = a.dtype
+    if shape is None:
+        shape = a.shape
     return Tensor(np.zeros_like(a=a, dtype=dtype, shape=shape), requires_grad=requires_grad)
 
 
@@ -295,6 +305,10 @@ def ones(shape, dtype=None, requires_grad=False) -> Tensor:
 
 
 def ones_like(a: Tensor, dtype=None, shape=None, requires_grad=False) -> Tensor:
+    if dtype is None:
+        dtype = a.dtype
+    if shape is None:
+        shape = a.shape
     return Tensor(np.ones_like(a=a, dtype=dtype, shape=shape), requires_grad=requires_grad)
 
 
@@ -770,5 +784,14 @@ def permute(a: Tensor, dims: Union[List, Tuple]) -> Tensor:
             return grad.transpose(axes_t)
 
         dependencies.append(Dependency(a, grad_fn, meta={"name": "permute"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def conj(x: Tensor) -> Tensor:
+    # TODO: impl backward
+    data = x.data.conj()
+    requires_grad = x.requires_grad
+    dependencies: List[Dependency] = []
 
     return Tensor(data, requires_grad, dependencies)

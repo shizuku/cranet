@@ -88,3 +88,12 @@ class no_grad(_DecoratorContextManager):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         set_grad_enabled(self.prev)
+
+
+class enable_grad(_DecoratorContextManager):
+    def __enter__(self):
+        self.prev = is_grad_enabled()
+        set_grad_enabled(True)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        set_grad_enabled(self.prev)

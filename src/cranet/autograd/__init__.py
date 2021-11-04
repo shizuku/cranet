@@ -5,17 +5,17 @@ from .tensor import (
     empty, zeros, zeros_like, ones, ones_like,
     add, sub, neg, mul, truediv, matmul, power, dot,
     sum, mean, var,
-    transpose, permute, concat, reshape, flatten, pad
+    transpose, permute, concat, reshape, flatten, pad, conj,
 )
 from .function import (
-    abs, max, min, log, exp, relu, sigmoid, softmax, tanh,
+    abs, max, maximum, min, log, exp, sqrt, relu, sigmoid, softmax, tanh,
 )
 from .random import (
     normal, normal_like,
     uniform, uniform_like,
 )
 from .grad_mode import (
-    no_grad
+    no_grad, enable_grad
 )
 import numpy as np
 
