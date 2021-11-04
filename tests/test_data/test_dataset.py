@@ -19,13 +19,25 @@ class TestDataset(unittest.TestCase):
         [print(indices[offset - length: offset]) for offset, length in zip(accumulate(lengths), lengths)]
 
     def test_random_split_1(self):
+        import platform
+        assert platform.system() == "Linux", "for now, this test is not supported on operating systems other than linux"
         HOME = Path.home()
         DATA_DIR = HOME / "Downloads" / "dataset"
-        cradataset = cravision.datasets.SVHN(root=DATA_DIR, transform=cravision.transforms.ToTensor())
+        if DATA_DIR.is_dir():
+            cradataset = cravision.datasets.SVHN(root=DATA_DIR, transform=cravision.transforms.ToTensor())
 
-        VAL_SIZE = 5000  # validation data size
-        TRAIN_SIZE = len(cradataset) - VAL_SIZE  # training data size
+            VAL_SIZE = 5000  # validation data size
+            TRAIN_SIZE = len(cradataset) - VAL_SIZE  # training data size
 
-        train_ds, val_ds = random_split(cradataset, [TRAIN_SIZE, VAL_SIZE])
+            train_ds, val_ds = random_split(cradataset, [TRAIN_SIZE, VAL_SIZE])
+            print()
+            print(len(train_ds), len(val_ds))
+
+    def test_random_split_2(self):
         print()
-        print(len(train_ds), len(val_ds))
+        for _ in range(10):
+            a = random_split(range(10), [3, 7])
+            a0, a1 = a
+            print([i for i in a0])
+            print([i for i in a1])
+            print()

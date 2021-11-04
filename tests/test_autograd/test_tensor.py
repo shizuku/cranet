@@ -856,6 +856,18 @@ class TestUnsqueeze(unittest.TestCase):
         self.assertTrue(z.shape == (100, 3, 4))
 
 
+class TestChore(unittest.TestCase):
+    def test_repr(self):
+        print()
+        a0 = np.random.rand(2, 2, 3)
+        a = cranet.tensor(a0)
+        b = torch.tensor(a0)
+        # repr_a0 = repr(a0).replace("array", "tensor")
+        print(a)
+        print(b)
+        print(repr(a0))
+
+
 if __name__ == '__main__':
     sys.path.append(os.getcwd())
     unittest.main()
