@@ -121,6 +121,25 @@ class TestMax(unittest.TestCase):
             self.assertTrue(teq(a_d.grad, a_t.grad))
 
 
+class TestMaximum(unittest.TestCase):
+    def test_maximum_0(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            b = np.random.rand(5, 6, 7, 8, 9)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = cranet.tensor(b, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            c_c = cranet.maximum(a_c, b_c)
+            c_t = torch.maximum(a_t, b_t)
+            self.assertTrue(teq(c_c, c_t))
+            g = np.random.rand(5, 6, 7, 8, 9)
+            c_t.backward(torch.tensor(g))
+            c_c.backward(cranet.tensor(g))
+            self.assertTrue(teq(a_c.grad, a_t.grad))
+            self.assertTrue(teq(b_c.grad, b_t.grad))
+
+
 class TestMin(unittest.TestCase):
     def test_min_0(self):
         for _ in range(100):
@@ -174,6 +193,25 @@ class TestMin(unittest.TestCase):
             b_t.backward(torch.tensor(g))
             b_d.backward(cranet.Tensor(g))
             self.assertTrue(teq(a_d.grad, a_t.grad))
+
+
+class TestMinimum(unittest.TestCase):
+    def test_minimum_0(self):
+        for _ in range(100):
+            a = np.random.rand(5, 6, 7, 8, 9)
+            b = np.random.rand(5, 6, 7, 8, 9)
+            a_c = cranet.tensor(a, requires_grad=True)
+            a_t = torch.tensor(a, requires_grad=True)
+            b_c = cranet.tensor(b, requires_grad=True)
+            b_t = torch.tensor(b, requires_grad=True)
+            c_c = cranet.minimum(a_c, b_c)
+            c_t = torch.minimum(a_t, b_t)
+            self.assertTrue(teq(c_c, c_t))
+            g = np.random.rand(5, 6, 7, 8, 9)
+            c_t.backward(torch.tensor(g))
+            c_c.backward(cranet.tensor(g))
+            self.assertTrue(teq(a_c.grad, a_t.grad))
+            self.assertTrue(teq(b_c.grad, b_t.grad))
 
 
 class TestLog(unittest.TestCase):

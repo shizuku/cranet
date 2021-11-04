@@ -52,11 +52,30 @@ def max(x: Tensor, dim=None, keepdim=False) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def maximum(a: Tensor, b: Tensor, out=None) -> Tensor:
-    # TODO: impl backward
-    data = np.maximum(a.data, b.data, out=out.data)
+def maximum(a: Tensor, b: Tensor, out: Optional[Tensor] = None) -> Tensor:
+    data = np.maximum(a.data, b.data)
     requires_grad = a.requires_grad or b.requires_grad
     dependencies = []
+
+    if a.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            g = np.where(a.data > b.data, grad, 0)
+            return g
+
+        dependencies.append(Dependency(a, grad_fn, meta={"name": "maximum_lhs"}))
+
+    if b.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            g = np.where(b.data > a.data, grad, 0)
+            return g
+
+        dependencies.append(Dependency(b, grad_fn, meta={"name": "maximum_rhs"}))
+
+    if out is not None:
+        out.data = data
+        if out.requires_grad:
+            out.dependencies = dependencies
+        return out
 
     return Tensor(data, requires_grad, dependencies)
 
@@ -84,6 +103,34 @@ def min(x: Tensor, dim=None, keepdim=False) -> Tensor:
                 return ret
 
         dependencies.append(Dependency(x, grad_fn, meta={"name": "max"}))
+
+    return Tensor(data, requires_grad, dependencies)
+
+
+def minimum(a: Tensor, b: Tensor, out: Optional[Tensor] = None) -> Tensor:
+    data = np.minimum(a.data, b.data)
+    requires_grad = a.requires_grad or b.requires_grad
+    dependencies = []
+
+    if a.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            g = np.where(a.data < b.data, grad, 0)
+            return g
+
+        dependencies.append(Dependency(a, grad_fn, meta={"name": "minimum_lhs"}))
+
+    if b.requires_grad:
+        def grad_fn(grad: np.ndarray, _) -> np.ndarray:
+            g = np.where(b.data < a.data, grad, 0)
+            return g
+
+        dependencies.append(Dependency(b, grad_fn, meta={"name": "minimum_rhs"}))
+
+    if out is not None:
+        out.data = data
+        if out.requires_grad:
+            out.dependencies = dependencies
+        return out
 
     return Tensor(data, requires_grad, dependencies)
 
