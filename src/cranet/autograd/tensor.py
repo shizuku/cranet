@@ -246,7 +246,8 @@ class Tensor:
         return _slice(self, idxs)
 
     def __repr__(self) -> str:
-        return f"Tensor({self.data}, shape={self.shape}, requires_grad={self.requires_grad})"
+        repr_data = repr(self.data).replace("array", "tensor")
+        return repr_data
 
     def __hash__(self) -> int:
         return hash(str(self.data.data))
