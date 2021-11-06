@@ -19,6 +19,7 @@ from collections import OrderedDict
 
 
 class Module:
+    _version = 1
     training: bool
 
     def __init__(self):
@@ -230,6 +231,25 @@ class Module:
         for name, param in self.named_parameters(recurse=recurse):
             yield param
 
+    def state_dict(self, destination=None, prefix='', keep_vars=False):
+        if destination is None:
+            destination = OrderedDict()
+            destination._metadata = OrderedDict()
+        destination._metadata[prefix[:-1]] = dict(version=self._version)
+        self._save_to_state_dict(destination, prefix, keep_vars)
+        for name, module in self._modules.items():
+            if module is not None:
+                module.state_dict(destination, prefix + name + '.', keep_vars=keep_vars)
+        return destination
+
+    def _save_to_state_dict(self, destination, prefix, keep_vars):
+        for name, param in self._parameters.items():
+            if param is not None:
+                destination[prefix + name] = param if keep_vars else param.detach()
+        for name, buf in self._buffers.items():
+            if buf is not None and name not in self._non_persistent_buffers_set:
+                destination[prefix + name] = buf if keep_vars else buf.detach()
+
     def train(self, mode: bool = True):
         self.training = mode
         for m in self.children():
@@ -259,7 +279,6 @@ class Module:
 
         main_str = self._get_name() + '('
         if lines:
-            # simple one-liner info, which most builtin Modules will use
             if len(extra_lines) == 1 and not child_lines:
                 main_str += extra_lines[0]
             else:
