@@ -7,9 +7,9 @@ import torch
 from torch.nn import functional as t_F
 from torch import nn as t_nn
 
-from src import cranet
-from src.cranet.nn import functional as c_F
-from src.cranet import nn as c_nn
+import cranet
+from cranet.nn import functional as c_F
+from cranet import nn as c_nn
 
 import numpy as np
 from ..utils import teq
