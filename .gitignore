@@ -10,3 +10,4 @@ cranet.egg-info
 node_modules
 .temp
 .cache
+*cache

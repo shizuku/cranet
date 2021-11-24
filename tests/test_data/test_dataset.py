@@ -32,6 +32,8 @@ class TestDataset(unittest.TestCase):
             train_ds, val_ds = random_split(cradataset, [TRAIN_SIZE, VAL_SIZE])
             print()
             print(len(train_ds), len(val_ds))
+        else:
+            print("test not available")
 
     def test_random_split_2(self):
         print()
