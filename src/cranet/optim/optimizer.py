@@ -2,7 +2,7 @@ import cranet
 
 from ..nn.parameter import Parameter
 
-from typing import Iterator
+from typing import Iterable
 from collections import defaultdict
 
 
@@ -17,7 +17,20 @@ required = _RequiredParameter()
 
 
 class Optimizer:
-    def __init__(self, params: Iterator[Parameter], defaults) -> None:
+    r"""Base class for all optimizers.
+
+    .. warning::
+        Parameters need to be specified as collections that have a deterministic
+        ordering that is consistent between runs. Examples of objects that don't
+        satisfy those properties are sets and iterators over values of dictionaries.
+
+    Args:
+        params (iterable): an iterable of :class:`cranet.Tensor` s or
+            :class:`dict` s. Specifies what Tensors should be optimized.
+        defaults: (dict): a dict containing default values of optimization
+            options (used when a parameter group doesn't specify them).
+    """
+    def __init__(self, params: Iterable[Parameter], defaults: dict) -> None:
         self.defaults = defaults
         self.state = defaultdict(dict)
         self.param_groups = []
@@ -50,7 +63,7 @@ class Optimizer:
         """
         raise NotImplementedError
 
-    def add_param_group(self, param_group):
+    def add_param_group(self, param_group: dict):
         assert isinstance(param_group, dict), 'param_group must be dict'
 
         params = param_group['params']
