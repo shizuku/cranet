@@ -7,10 +7,34 @@ import numpy as np
 
 import torch
 from torch.nn import functional as torch_F
+from cranet.nn import functional as cranet_F
 
 from src import cranet
 
 from ..utils import teq
+
+
+class TestTensorTemplate(unittest.TestCase):
+    def test_autograd_template_0(self):
+        a = cranet.random.normal((2, 3), requires_grad=True)
+        result = a.sum()
+        result.backward()
+        print(a)
+        print()
+        print(a.grad)
+
+    def test_autograd_template_1(self):
+        x = cranet.ones(5)
+        y = cranet.zeros(3)
+        w = cranet.random.normal((5, 3), requires_grad=True)
+        b = cranet.random.normal(3, requires_grad=True)
+        z = x @ w + b
+
+        loss = cranet.nn.functional.mse_loss(z, y)
+        loss.backward()
+
+        print()
+        print(f"w: {w.grad} \nb: {b.grad}")
 
 
 class TestTensorSum(unittest.TestCase):

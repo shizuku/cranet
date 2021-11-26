@@ -92,7 +92,7 @@ class TestMax(unittest.TestCase):
             b_d.backward(cranet.Tensor(g))
             self.assertTrue(teq(a_d.grad, a_t.grad, 2e-7))
 
-    def test_max_5(self):
+    def test_max_2(self):
         for _ in range(100):
             a = np.random.rand(5, 6, 7, 8, 9)
             a_d = cranet.Tensor(a, requires_grad=True)
@@ -106,7 +106,7 @@ class TestMax(unittest.TestCase):
             b_d.backward(cranet.Tensor(g))
             self.assertTrue(teq(a_d.grad, a_t.grad))
 
-    def test_max_6(self):
+    def test_max_3(self):
         for _ in range(100):
             a = np.random.rand(5, 6, 7, 8, 9)
             a_d = cranet.Tensor(a, requires_grad=True)
@@ -166,7 +166,7 @@ class TestMin(unittest.TestCase):
             b_d.backward(cranet.Tensor(g))
             self.assertTrue(teq(a_d.grad, a_t.grad, 2e-7))
 
-    def test_min_5(self):
+    def test_min_2(self):
         for _ in range(100):
             a = np.random.rand(5, 6, 7, 8, 9)
             a_d = cranet.Tensor(a, requires_grad=True)
@@ -180,7 +180,7 @@ class TestMin(unittest.TestCase):
             b_d.backward(cranet.Tensor(g))
             self.assertTrue(teq(a_d.grad, a_t.grad))
 
-    def test_min_6(self):
+    def test_min_3(self):
         for _ in range(100):
             a = np.random.rand(5, 6, 7, 8, 9)
             a_d = cranet.Tensor(a, requires_grad=True)
@@ -345,6 +345,12 @@ class TestFlatten(unittest.TestCase):
             b_d.backward(g_d)
             b_t.backward(g_t)
             self.assertTrue(teq(a_d, a_t))
+
+
+class TestHardlim(unittest.TestCase):
+    def test_sign(self):
+        a = cranet.tensor([0.7, -1.2, 0., 2.3])
+        print(f"\n{cranet.hardlim(a)}")
 
 
 if __name__ == '__main__':

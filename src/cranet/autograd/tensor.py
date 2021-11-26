@@ -103,7 +103,6 @@ class Tensor:
 
     def backward(self, grad: Optional[Tensor] = None) -> None:
         assert self.requires_grad, "called backward on a non-requires-grad tensor"
-        # assert self.grad is not None, "must call zero_grad before backward"
 
         if self.grad is None:
             self.zero_grad()

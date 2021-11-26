@@ -7,8 +7,9 @@ from .tensor import (
     sum, mean, var,
     transpose, permute, concat, reshape, flatten, pad, conj,
 )
+
 from .function import (
-    abs, max, maximum, min, minimum, log, exp, sqrt, relu, sigmoid, softmax, tanh,
+    abs, max, maximum, min, minimum, log, exp, sqrt, relu, sigmoid, softmax, tanh, hardlim
 )
 from .random import (
     normal, normal_like,
