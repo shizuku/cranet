@@ -33,7 +33,7 @@ class Conv2d(Module):
                  dilation: Union[Tuple, List, int] = 1,
                  groups: int = 1, bias: bool = True, padding_mode: str = 'zeros'):
         """
-            TODO: impl dilation, groups
+            TODO: impl dilation
 
             :param in_channels: str
             :param out_channels: str

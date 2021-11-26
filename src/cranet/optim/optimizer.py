@@ -17,12 +17,12 @@ required = _RequiredParameter()
 
 
 class Optimizer:
-    def __init__(self, params: Iterator[Parameter], defaults) -> None:
+    def __init__(self, parameters: Iterator[Parameter], defaults) -> None:
         self.defaults = defaults
         self.state = defaultdict(dict)
         self.param_groups = []
 
-        param_groups = list(params)
+        param_groups = list(parameters)
         if len(param_groups) == 0:
             raise ValueError('optimizer got empty parameters')
         if not isinstance(param_groups[0], dict):

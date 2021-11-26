@@ -254,6 +254,9 @@ class Tensor:
     def __getitem__(self, idxs):
         return _slice(self, idxs)
 
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
     def __repr__(self) -> str:
         repr_data = repr(self.data).replace("array", "tensor")
         return repr_data
