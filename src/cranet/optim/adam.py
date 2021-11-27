@@ -43,7 +43,7 @@ class Adam(Optimizer):
     For further details regarding the algorithm we refer to `Adam: A Method for Stochastic Optimization`_.
 
     Args:
-        params (iterable): iterable of parameters to optimize or dicts defining
+        parameters (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
         lr (float, optional): learning rate (default: 1e-3)
         betas (Tuple[float, float], optional): coefficients used for computing

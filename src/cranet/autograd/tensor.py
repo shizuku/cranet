@@ -160,6 +160,9 @@ class Tensor:
     def eq(self, other) -> Tensor:
         return eq(self, other)
 
+    def add(self, other, alpha=1):
+        return add(self, ensure_tensor(other), alpha)
+
     @property
     def T(self) -> Tensor:
         return permute(self, list(range(len(self.shape) - 1, -1, -1)))
@@ -511,8 +514,8 @@ def var(x: Tensor, dim: Optional[Shapable] = None,
     return s / numel
 
 
-def add(t1: Tensor, t2: Tensor) -> Tensor:
-    data = np.add(t1.data, t2.data)
+def add(t1: Tensor, t2: Tensor, alpha=1) -> Tensor:
+    data = np.add(t1.data, alpha * t2.data)
     requires_grad = t1.requires_grad or t2.requires_grad
     dependencies: List[Dependency] = []
 
@@ -536,7 +539,7 @@ def add(t1: Tensor, t2: Tensor) -> Tensor:
             for i, dim in enumerate(t2.shape):
                 if dim == 1:
                     grad = grad.sum(axis=i, keepdims=True)
-            return grad
+            return grad * alpha
 
         dependencies.append(Dependency(t2, grad_fn2, meta={"name": "add_rhs"}))
 
