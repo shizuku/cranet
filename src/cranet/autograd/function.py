@@ -52,25 +52,14 @@ def max(x: Tensor, dim=None, keepdim=False) -> Tensor:
     return Tensor(data, requires_grad, dependencies)
 
 
-def hardlim(x: Tensor, out: Optional[Tensor] = None) -> Tensor:
-    # TODO: test `out` option
-
+def hardlim(x: Tensor) -> Tensor:
     r""" implement sign function
     .. math::
         1 if x >= 0 else 0
     this is a function without autograd (purely for computation usage)
     """
 
-    def f(z: np.ndarray) -> np.ndarray:
-        return 1 if z >= 0 else 0
-
-    f = np.frompyfunc(f, 1, 1)  # Takes an arbitrary Python function and returns a NumPy ufunc
-
-    data = f(x.data)
-    if out:
-        out.data = data
-        if out.requires_grad:
-            out.dependencies = dependencies
+    data = np.where(x.data >= 0, 1, 0)
     return Tensor(data)
 
 
